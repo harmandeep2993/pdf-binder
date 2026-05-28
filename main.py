@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.background import BackgroundTasks
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pypdf import PdfReader, PdfWriter
@@ -17,6 +18,20 @@ FRONTEND = Path(__file__).parent / "index.html"
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     return FRONTEND.read_text(encoding="utf-8")
+
+def _render_thumbs(content: bytes, password: str, total: int) -> list[str]:
+    doc = pdfium.PdfDocument(content, password=password.encode() if password else None)
+    thumbs = []
+    for i in range(total):
+        page   = doc[i]
+        bitmap = page.render(scale=0.4)
+        pil    = bitmap.to_pil().convert("RGB")
+        buf    = io.BytesIO()
+        pil.save(buf, format="JPEG", quality=70)
+        thumbs.append(base64.b64encode(buf.getvalue()).decode())
+        page.close()
+    doc.close()
+    return thumbs
 
 def assert_pdf(content: bytes, name: str = "file"):
     if not content.startswith(b"%PDF-"):
@@ -51,20 +66,7 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
 
         reader = open_reader(content, password)
         total  = len(reader.pages)
-
-        # for pypdfium2 we need to pass password separately
-        doc = pdfium.PdfDocument(content, password=password.encode() if password else None)
-        thumbs = []
-        for i in range(total):
-            page   = doc[i]
-            bitmap = page.render(scale=0.4)
-            pil    = bitmap.to_pil().convert("RGB")
-            buf    = io.BytesIO()
-            pil.save(buf, format="JPEG", quality=70)
-            thumbs.append(base64.b64encode(buf.getvalue()).decode())
-            page.close()
-        doc.close()
-
+        thumbs = await run_in_threadpool(_render_thumbs, content, password, total)
         return {"filename": file.filename, "total": total, "thumbs": thumbs, "size": len(content)}
     except HTTPException:
         raise
