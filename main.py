@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.background import BackgroundTasks
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pypdf import PdfReader, PdfWriter
@@ -67,6 +69,7 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
 
 @app.post("/merge")
 async def merge_pdfs(
+    background_tasks: BackgroundTasks,
     files: list[UploadFile] = File(...),
     pages: str = Form(...),
     filename: str = Form("merged.pdf"),
@@ -97,6 +100,7 @@ async def merge_pdfs(
             filename += ".pdf"
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         writer.write(tmp); tmp.close()
+        background_tasks.add_task(os.unlink, tmp.name)
         return FileResponse(tmp.name, filename=filename, media_type="application/pdf")
     except HTTPException: raise
     except Exception as e:
@@ -104,6 +108,7 @@ async def merge_pdfs(
 
 @app.post("/split")
 async def split_pdf(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     page_indices: str = Form(...),
     rotations: str = Form("{}"),
@@ -154,6 +159,7 @@ async def split_pdf(
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
         tmp.write(zip_buf.read()); tmp.close()
         suffix = "_images" if to_images else "_split"
+        background_tasks.add_task(os.unlink, tmp.name)
         return FileResponse(tmp.name, filename=f"{stem}{suffix}.zip", media_type="application/zip")
     except HTTPException: raise
     except Exception as e:
