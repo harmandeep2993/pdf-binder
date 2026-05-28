@@ -96,6 +96,7 @@ async def merge_pdfs(
                 page.rotate(rotation)
             writer.add_page(page)
 
+        filename = Path(filename).name or "merged.pdf"
         if not filename.lower().endswith(".pdf"):
             filename += ".pdf"
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
