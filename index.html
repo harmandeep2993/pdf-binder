@@ -398,8 +398,7 @@ function snapshot() {
 }
 function doUndo() {
   if (!undoStack.length) return;
-  const prev = undoStack.pop();
-  files = prev.map(snap => ({ ...snap, fileObj: (files.find(f => f.id === snap.id) || {}).fileObj }));
+  files = undoStack.pop();
   renderGrid(); hideUndoToast();
 }
 function showUndoToast(msg) {
