@@ -267,7 +267,7 @@ let files = [];        // [{id,filename,fileObj,total,thumbs,size,pages:[{includ
 let dragSrc = null;
 let undoStack = [];
 let undoTimer = null;
-const filePasswords = {};  // filename -> password
+const filePasswords = {};  // file id -> password
 
 // modal
 let modalFileId  = null;
@@ -333,7 +333,7 @@ async function loadFiles(newFiles) {
     const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     files.push({ id, filename: file.name, fileObj: file, total: 0, thumbs: [], size: 0, pages: [], loading: true });
     renderGrid();
-    await loadOneFile(id, file, filePasswords[file.name] || '');
+    await loadOneFile(id, file, filePasswords[id] || '');
   }
 }
 
@@ -364,7 +364,7 @@ async function loadOneFile(id, file, password) {
         return;
       }
       const d = await r.json();
-      filePasswords[file.name] = pw;
+      filePasswords[id] = pw;
       const f = files.find(x => x.id === id);
       if (f) {
         f.loading = false;
@@ -503,9 +503,10 @@ document.getElementById('merge-btn').addEventListener('click', async () => {
     fd.append('files', f.fileObj);
     f.pages.forEach((p,i) => { if(p.include) pagesList.push({file:f.filename,page:i,rotation:p.rotation||0}); });
   });
+  const pwByName = Object.fromEntries(files.map(f => [f.filename, filePasswords[f.id] || '']));
   fd.append('pages', JSON.stringify(pagesList));
   fd.append('filename', fname);
-  fd.append('passwords', JSON.stringify(filePasswords));
+  fd.append('passwords', JSON.stringify(pwByName));
   try {
     const r = await fetch('/merge',{method:'POST',body:fd});
     if (!r.ok) { const e=await r.json(); throw new Error(e.detail); }
@@ -619,7 +620,7 @@ async function extractSelected() {
   setModalStatus('Extracting…','loading');
   const fd=new FormData(); fd.append('file',f.fileObj); fd.append('page_indices',JSON.stringify(indices));
   fd.append('rotations',JSON.stringify(rotMap)); fd.append('as_images',fmt!=='pdf'?'true':'false');
-  fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.filename]||'');
+  fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.id]||'');
   try {
     const r=await fetch('/split',{method:'POST',body:fd});
     if(!r.ok){const e=await r.json();throw new Error(e.detail);}
@@ -636,7 +637,7 @@ async function splitAllPages() {
   setModalStatus('Splitting…','loading');
   const fd=new FormData(); fd.append('file',f.fileObj); fd.append('page_indices',JSON.stringify(indices));
   fd.append('rotations',JSON.stringify(rotMap)); fd.append('as_images',fmt!=='pdf'?'true':'false');
-  fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.filename]||'');
+  fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.id]||'');
   try {
     const r=await fetch('/split',{method:'POST',body:fd});
     if(!r.ok){const e=await r.json();throw new Error(e.detail);}
