@@ -18,6 +18,10 @@ FRONTEND = Path(__file__).parent / "index.html"
 def serve_frontend():
     return FRONTEND.read_text(encoding="utf-8")
 
+def assert_pdf(content: bytes, name: str = "file"):
+    if not content.startswith(b"%PDF-"):
+        raise HTTPException(400, f"{name} is not a valid PDF")
+
 def open_reader(content: bytes, password: str = "") -> PdfReader:
     """Open a PdfReader, decrypting if needed. Raises HTTPException on wrong password."""
     reader = PdfReader(io.BytesIO(content))
@@ -31,6 +35,7 @@ def open_reader(content: bytes, password: str = "") -> PdfReader:
 async def get_pages(file: UploadFile = File(...), password: str = Form("")):
     try:
         content = await file.read()
+        assert_pdf(content, file.filename)
 
         # detect encryption before trying
         probe = PdfReader(io.BytesIO(content), strict=False)
@@ -80,7 +85,9 @@ async def merge_pdfs(
         pw_map     = json.loads(passwords)  # {"filename": "password"}
         buffers: dict[str, bytes] = {}
         for f in files:
-            buffers[f.filename] = await f.read()
+            content = await f.read()
+            assert_pdf(content, f.filename)
+            buffers[f.filename] = content
 
         writer = PdfWriter()
         for entry in pages_list:
@@ -122,6 +129,7 @@ async def split_pdf(
         rot_map   = json.loads(rotations)
         to_images = as_images.lower() == "true"
         content   = await file.read()
+        assert_pdf(content, file.filename)
         reader    = open_reader(content, password)
         total     = len(reader.pages)
         stem      = Path(file.filename).stem
