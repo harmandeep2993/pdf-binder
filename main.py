@@ -89,19 +89,20 @@ async def merge_pdfs(
             assert_pdf(content, f.filename)
             buffers[f.filename] = content
 
+        readers: dict[str, PdfReader] = {
+            fname: open_reader(buf, pw_map.get(fname, ""))
+            for fname, buf in buffers.items()
+        }
         writer = PdfWriter()
         for entry in pages_list:
             fname    = entry["file"]
             pidx     = entry["page"]
             rotation = entry.get("rotation", 0)
-            if fname not in buffers:
+            if fname not in readers:
                 raise HTTPException(400, f"File not found: {fname}")
-            pw     = pw_map.get(fname, "")
-            reader = open_reader(buffers[fname], pw)
-            page   = reader.pages[pidx]
+            added = writer.add_page(readers[fname].pages[pidx])
             if rotation:
-                page.rotate(rotation)
-            writer.add_page(page)
+                added.rotate(rotation)
 
         filename = Path(filename).name or "merged.pdf"
         if not filename.lower().endswith(".pdf"):
