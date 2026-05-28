@@ -421,7 +421,7 @@ function renderGrid() {
 
   const totalPages = files.reduce((s, f) => s + f.pages.filter(p => p.include).length, 0);
   badge.textContent = files.length ? `${files.length} file${files.length>1?'s':''} · ${totalPages} pg` : '';
-  mBtn.disabled = totalPages < 2;
+  mBtn.disabled = totalPages < 1;
 
   files.forEach(file => {
     const card = document.createElement('div');
