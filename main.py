@@ -7,13 +7,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import FileNotDecryptedError
 import pypdfium2 as pdfium
-import tempfile, json, io, base64, traceback, zipfile
+import hashlib, tempfile, json, io, base64, traceback, zipfile
 from pathlib import Path
 from PIL import Image
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 FRONTEND = Path(__file__).parent / "index.html"
+
+_file_cache: dict[str, bytes] = {}  # sha256 -> content
+
+def _cache_put(content: bytes) -> str:
+    key = hashlib.sha256(content).hexdigest()
+    _file_cache[key] = content
+    return key
+
+def _cache_get(key: str) -> bytes | None:
+    return _file_cache.get(key)
 
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
@@ -67,7 +77,8 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
         reader = open_reader(content, password)
         total  = len(reader.pages)
         thumbs = await run_in_threadpool(_render_thumbs, content, password, total)
-        return {"filename": file.filename, "total": total, "thumbs": thumbs, "size": len(content)}
+        cache_key = _cache_put(content)
+        return {"filename": file.filename, "total": total, "thumbs": thumbs, "size": len(content), "key": cache_key}
     except HTTPException:
         raise
     except Exception as e:
@@ -80,16 +91,22 @@ async def merge_pdfs(
     files: list[UploadFile] = File(...),
     pages: str = Form(...),
     filename: str = Form("merged.pdf"),
-    passwords: str = Form("{}")
+    passwords: str = Form("{}"),
+    keys: str = Form("{}")
 ):
     try:
         pages_list = json.loads(pages)
         pw_map     = json.loads(passwords)  # {"filename": "password"}
+        key_map    = json.loads(keys)        # {"filename": "sha256"}
         buffers: dict[str, bytes] = {}
         for f in files:
-            content = await f.read()
-            assert_pdf(content, f.filename)
-            buffers[f.filename] = content
+            cached = _cache_get(key_map.get(f.filename, ""))
+            if cached is not None:
+                buffers[f.filename] = cached
+            else:
+                content = await f.read()
+                assert_pdf(content, f.filename)
+                buffers[f.filename] = content
 
         readers: dict[str, PdfReader] = {
             fname: open_reader(buf, pw_map.get(fname, ""))
@@ -125,14 +142,19 @@ async def split_pdf(
     rotations: str = Form("{}"),
     as_images: str = Form("false"),
     image_format: str = Form("jpeg"),
-    password: str = Form("")
+    password: str = Form(""),
+    key: str = Form("")
 ):
     try:
         indices   = json.loads(page_indices)
         rot_map   = json.loads(rotations)
         to_images = as_images.lower() == "true"
-        content   = await file.read()
-        assert_pdf(content, file.filename)
+        cached    = _cache_get(key)
+        if cached is not None:
+            content = cached
+        else:
+            content = await file.read()
+            assert_pdf(content, file.filename)
         reader    = open_reader(content, password)
         total     = len(reader.pages)
         stem      = Path(file.filename).stem

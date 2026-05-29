@@ -371,6 +371,7 @@ async function loadOneFile(id, file, password) {
         f.total   = d.total;
         f.thumbs  = d.thumbs;
         f.size    = d.size || 0;
+        f.key     = d.key || '';
         f.pages   = Array.from({length: d.total}, () => ({ include: true, rotation: 0 }));
         renderGrid();
         checkSizeWarn();
@@ -503,10 +504,12 @@ document.getElementById('merge-btn').addEventListener('click', async () => {
     fd.append('files', f.fileObj);
     f.pages.forEach((p,i) => { if(p.include) pagesList.push({file:f.filename,page:i,rotation:p.rotation||0}); });
   });
-  const pwByName = Object.fromEntries(files.map(f => [f.filename, filePasswords[f.id] || '']));
+  const pwByName  = Object.fromEntries(files.map(f => [f.filename, filePasswords[f.id] || '']));
+  const keyByName = Object.fromEntries(files.map(f => [f.filename, f.key || '']));
   fd.append('pages', JSON.stringify(pagesList));
   fd.append('filename', fname);
   fd.append('passwords', JSON.stringify(pwByName));
+  fd.append('keys', JSON.stringify(keyByName));
   try {
     const r = await fetch('/merge',{method:'POST',body:fd});
     if (!r.ok) { const e=await r.json(); throw new Error(e.detail); }
@@ -621,6 +624,7 @@ async function extractSelected() {
   const fd=new FormData(); fd.append('file',f.fileObj); fd.append('page_indices',JSON.stringify(indices));
   fd.append('rotations',JSON.stringify(rotMap)); fd.append('as_images',fmt!=='pdf'?'true':'false');
   fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.id]||'');
+  fd.append('key', f.key||'');
   try {
     const r=await fetch('/split',{method:'POST',body:fd});
     if(!r.ok){const e=await r.json();throw new Error(e.detail);}
@@ -638,6 +642,7 @@ async function splitAllPages() {
   const fd=new FormData(); fd.append('file',f.fileObj); fd.append('page_indices',JSON.stringify(indices));
   fd.append('rotations',JSON.stringify(rotMap)); fd.append('as_images',fmt!=='pdf'?'true':'false');
   fd.append('image_format',fmt==='png'?'png':'jpeg'); fd.append('password',filePasswords[f.id]||'');
+  fd.append('key', f.key||'');
   try {
     const r=await fetch('/split',{method:'POST',body:fd});
     if(!r.ok){const e=await r.json();throw new Error(e.detail);}
