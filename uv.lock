@@ -199,7 +199,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pdfuse"
+name = "pagefuse"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
