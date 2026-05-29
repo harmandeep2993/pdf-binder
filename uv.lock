@@ -199,7 +199,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pdfmerger"
+name = "pdfuse"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
