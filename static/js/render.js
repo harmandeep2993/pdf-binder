@@ -21,7 +21,12 @@ export function renderGrid() {
   let order = 1;
   S.files.forEach(file => {
     const card = document.createElement('div');
-    card.className = 'fcard'; card.draggable = !file.loading; card.dataset.id = file.id;
+    const included   = file.pages.filter(p => p.include).length;
+    const partial    = !file.loading && !file.error && included < file.total && included > 0;
+    const allExcluded = !file.loading && !file.error && included === 0 && file.total > 0;
+    const cardOrder  = !file.loading && !file.error ? order++ : '';
+    card.className = 'fcard' + (allExcluded ? ' all-excluded' : '');
+    card.draggable = !file.loading; card.dataset.id = file.id;
 
     const thumb = file.loading
       ? `<div class="spinner"></div>`
@@ -30,15 +35,13 @@ export function renderGrid() {
         : file.thumbs[0] ? `<img src="data:image/jpeg;base64,${file.thumbs[0]}" alt="cover">`
         : `<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="opacity:.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/><path d="M13 2v6h6"/></svg>`;
 
-    const included  = file.pages.filter(p => p.include).length;
-    const partial   = !file.loading && !file.error && included < file.total;
-    const cardOrder = !file.loading && !file.error ? order++ : '';
+    const pgBadgeClass = partial ? ' partial' : allExcluded ? ' none' : '';
 
     card.innerHTML = `
       <div class="fcard-thumb">
         ${thumb}
         ${cardOrder ? `<span class="fcard-order">${cardOrder}</span>` : ''}
-        ${!file.loading && !file.error ? `<span class="pg-badge${partial ? ' partial' : ''}">${included}/${file.total}</span>` : ''}
+        ${!file.loading && !file.error ? `<span class="pg-badge${pgBadgeClass}">${allExcluded ? 'none' : `${included}/${file.total}`}</span>` : ''}
         ${!file.loading && !file.error ? `<div class="fcard-hover">
           <button class="hover-open" onclick="window.openModal('${file.id}');event.stopPropagation()">Inspect</button>
           <button class="hover-del"  onclick="window.removeFileAction('${file.id}');event.stopPropagation()">Remove</button>
@@ -57,10 +60,26 @@ export function renderGrid() {
       card.addEventListener('mouseenter', () => { ci = 0; t = setInterval(() => { ci = (ci + 1) % Math.min(file.thumbs.length, 3); if (img) img.src = 'data:image/jpeg;base64,' + file.thumbs[ci]; }, 700); });
       card.addEventListener('mouseleave', () => { clearInterval(t); if (img) img.src = 'data:image/jpeg;base64,' + file.thumbs[0]; });
     }
+
+    // keyboard: Enter/Space opens inspect modal
+    if (!file.loading && !file.error) {
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.openModal(file.id); }
+      });
+    }
+
     if (!file.loading) {
-      card.addEventListener('dragstart', () => { S.setDragSrc(file.id); setTimeout(() => card.classList.add('dragging'), 0); });
-      card.addEventListener('dragend',   () => { card.classList.remove('dragging'); clearCardDrag(); });
-      card.addEventListener('dragover',  e => {
+      card.addEventListener('dragstart', () => {
+        S.setDragSrc(file.id); S.setIsDragging(true);
+        grid.classList.add('is-dragging');
+        setTimeout(() => card.classList.add('dragging'), 0);
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging'); clearCardDrag();
+        S.setIsDragging(false); grid.classList.remove('is-dragging');
+      });
+      card.addEventListener('dragover', e => {
         e.preventDefault(); clearCardDrag();
         const after = e.clientX >= card.getBoundingClientRect().left + card.offsetWidth / 2;
         card.classList.add(after ? 'drop-after' : 'drop-before');
@@ -84,7 +103,7 @@ export function renderGrid() {
     grid.appendChild(card);
   });
 
-  // end-zone: drop target after all cards for "append to end"
+  // end-zone: only rendered when files exist; visible only during drag via CSS
   if (S.files.some(f => !f.loading)) {
     const ez = document.createElement('div');
     ez.className = 'fcard-end-zone';
@@ -124,9 +143,8 @@ export function renderPreview() {
   empty.style.display = 'none';
   count.textContent = items.length + ' pg';
 
-  // single-column doc-scroll: full panel width, A4 ratio
-  const thumbW = 260 - 16; // 8px padding each side = 244px
-  const thumbH = Math.round(thumbW * 1.414); // ~345px — A4
+  const thumbW = 260 - 16;
+  const thumbH = Math.round(thumbW * 1.414);
 
   items.forEach((item, n) => {
     const rot = item.rotation, sideways = rot === 90 || rot === 270;
@@ -152,7 +170,7 @@ export function renderModalPages() {
   file.pages.forEach((pg, i) => {
     const card = document.createElement('div');
     const rot  = pg.rotation || 0;
-    card.className  = 'mpage' + (S.modalSel.has(i) ? ' selected' : '');
+    card.className   = 'mpage' + (S.modalSel.has(i) ? ' selected' : '');
     card.dataset.idx = i;
     const rs = rot ? `style="transform:rotate(${rot}deg);width:${rot === 180 ? '100%' : '72%'};margin:auto"` : '';
     card.innerHTML = `
@@ -175,19 +193,23 @@ export function renderModalPages() {
     card.addEventListener('dragleave', () => clearModalDrag());
     card.addEventListener('drop', e => {
       e.preventDefault(); clearModalDrag();
-      if (S.modalDragSrc === null || S.modalDragSrc === i) return;
+      const src = S.modalDragSrc;
+      if (src === null || src === i) return;
       snapshot();
-      const [mp] = file.pages.splice(S.modalDragSrc, 1);
-      const [mt] = file.thumbs.splice(S.modalDragSrc, 1);
+      const [mp] = file.pages.splice(src, 1);
+      const [mt] = file.thumbs.splice(src, 1);
+      // adjust insert index after removal
+      const insertAt = src < i ? i - 1 : i;
       const newSel = new Set();
       S.modalSel.forEach(s => {
-        if (s === S.modalDragSrc) newSel.add(i);
-        else if (s > S.modalDragSrc && s <= i) newSel.add(s - 1);
-        else if (s < S.modalDragSrc && s >= i) newSel.add(s + 1);
+        if (s === src) newSel.add(insertAt);
+        else if (src < insertAt && s > src && s <= insertAt) newSel.add(s - 1);
+        else if (src > insertAt && s >= insertAt && s < src) newSel.add(s + 1);
         else newSel.add(s);
       });
       S.setModalSel(newSel);
-      file.pages.splice(i, 0, mp); file.thumbs.splice(i, 0, mt);
+      file.pages.splice(insertAt, 0, mp);
+      file.thumbs.splice(insertAt, 0, mt);
       S.setModalDragSrc(null); renderModalPages();
     });
     grid.appendChild(card);
@@ -210,7 +232,6 @@ export function updateModalCounts() {
   document.getElementById('modal-remove-btn').disabled  = n === 0;
 }
 
-// undo helpers used by render
 export function snapshot() {
   S.undoStack.push(S.files.map(f => ({ ...f, pages: f.pages.map(p => ({ ...p })) })));
   if (S.undoStack.length > 20) S.undoStack.shift();

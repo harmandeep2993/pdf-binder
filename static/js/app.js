@@ -94,8 +94,7 @@ function doExtractSelected() {
   const f=getModalFile();if(!f||!S.modalSel.size)return;
   const fmt=document.getElementById('fmt-select').value;
   const indices=[...S.modalSel].sort((a,b)=>a-b);
-  const rotMap={}; indices.forEach(i=>{if(f.pages[i].rotation)rotMap[i]=f.pages[i].rotation;});
-  extractSelected(f,fmt,indices,rotMap);
+  extractSelected(f,fmt,indices);
 }
 function doSplitAllPages() {
   const f=getModalFile();if(!f)return;

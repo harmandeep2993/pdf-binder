@@ -3,7 +3,11 @@ from fastapi import HTTPException
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 
+_MAX_UPLOAD = 100 * 1024 * 1024  # 100 MB
+
 def assert_pdf(content: bytes, name: str = "file") -> None:
+    if len(content) > _MAX_UPLOAD:
+        raise HTTPException(413, f"{name} exceeds the 100 MB upload limit")
     if not content.startswith(b"%PDF-"):
         raise HTTPException(400, f"{name} is not a valid PDF")
 

@@ -22,7 +22,7 @@ async def split_pdf(
 ):
     try:
         indices   = json.loads(page_indices)
-        rot_map   = json.loads(rotations)
+        rot_map   = json.loads(rotations)   # keyed by position (str), not page index
         to_images = as_images.lower() == "true"
         cached    = cache_get(key)
         content   = cached if cached is not None else await file.read()
@@ -39,29 +39,35 @@ async def split_pdf(
                 doc = pdfium.PdfDocument(content, password=password.encode() if password else None)
                 fmt = image_format.lower()
                 ext = "jpg" if fmt == "jpeg" else fmt
+                pos = 0
                 for idx in indices:
                     if idx < 0 or idx >= total: continue
+                    rotation = rot_map.get(str(pos), 0)
                     page   = doc[idx]
-                    bitmap = page.render(scale=2.0, rotation=rot_map.get(str(idx), 0))
+                    bitmap = page.render(scale=2.0, rotation=rotation)
                     buf    = io.BytesIO()
                     bitmap.to_pil().convert("RGB").save(
                         buf, format="JPEG" if fmt == "jpeg" else "PNG",
                         quality=92 if fmt == "jpeg" else None
                     )
-                    zf.writestr(f"{stem}_page{idx+1}.{ext}", buf.getvalue())
+                    zf.writestr(f"{stem}_{pos+1:03d}.{ext}", buf.getvalue())
                     page.close()
+                    pos += 1
                 doc.close()
             else:
+                pos = 0
                 for idx in indices:
                     if idx < 0 or idx >= total: continue
+                    rotation = rot_map.get(str(pos), 0)
                     w  = PdfWriter()
                     pg = reader.pages[idx]
-                    if rot_map.get(str(idx), 0):
-                        pg.rotate(rot_map[str(idx)])
+                    if rotation:
+                        pg.rotate(rotation)
                     w.add_page(pg)
                     buf = io.BytesIO()
                     w.write(buf)
-                    zf.writestr(f"{stem}_page{idx+1}.pdf", buf.getvalue())
+                    zf.writestr(f"{stem}_{pos+1:03d}.pdf", buf.getvalue())
+                    pos += 1
 
         zip_buf.seek(0)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")

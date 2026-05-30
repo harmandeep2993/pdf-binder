@@ -34,7 +34,8 @@ export async function loadOneFile(id, file, password) {
       if (f) {
         f.loading = false; f.total = d.total; f.thumbs = d.thumbs;
         f.size = d.size || 0; f.key = d.key || '';
-        f.pages = Array.from({ length: d.total }, () => ({ include: true, rotation: 0 }));
+        // origIdx tracks the source page in the original PDF (survives reorder/duplicate)
+        f.pages = Array.from({ length: d.total }, (_, i) => ({ include: true, rotation: 0, origIdx: i }));
         renderGrid(); checkSizeWarn();
       }
     } catch (e) {
@@ -60,7 +61,8 @@ export async function mergeFiles() {
   const pagesList = [];
   S.files.forEach(f => {
     fd.append('files', f.fileObj);
-    f.pages.forEach((p, i) => { if (p.include) pagesList.push({ file: f.filename, page: i, rotation: p.rotation || 0 }); });
+    // use origIdx so duplicated/reordered pages map to correct source page
+    f.pages.forEach(p => { if (p.include) pagesList.push({ file: f.filename, page: p.origIdx, rotation: p.rotation || 0 }); });
   });
   fd.append('pages', JSON.stringify(pagesList));
   fd.append('filename', fname);
@@ -75,10 +77,14 @@ export async function mergeFiles() {
   btn.disabled = false;
 }
 
-export async function extractSelected(f, fmt, indices, rotMap) {
+export async function extractSelected(f, fmt, selIndices) {
+  // selIndices = frontend page array indices (may contain duplicates)
   setModalStatus('Extracting…', 'loading');
+  const origIndices = selIndices.map(i => f.pages[i].origIdx);
+  const rotMap = {};
+  selIndices.forEach((fi, pos) => { if (f.pages[fi].rotation) rotMap[pos] = f.pages[fi].rotation; });
   const fd = new FormData();
-  fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(indices));
+  fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(origIndices));
   fd.append('rotations', JSON.stringify(rotMap)); fd.append('as_images', fmt !== 'pdf' ? 'true' : 'false');
   fd.append('image_format', fmt === 'png' ? 'png' : 'jpeg'); fd.append('password', S.filePasswords[f.id] || '');
   fd.append('key', f.key || '');
@@ -86,17 +92,18 @@ export async function extractSelected(f, fmt, indices, rotMap) {
     const r = await fetch('/split', { method: 'POST', body: fd });
     if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
     triggerDownload(await r.blob(), f.filename.replace('.pdf', '') + (fmt === 'pdf' ? '_extract.zip' : '_images.zip'));
-    setModalStatus(`${indices.length} page(s) downloaded as ${fmt.toUpperCase()}.`, 'ok');
+    setModalStatus(`${selIndices.length} page(s) downloaded as ${fmt.toUpperCase()}.`, 'ok');
   } catch (e) { setModalStatus('Error: ' + e.message, 'err'); }
 }
 
 export async function splitAllPages(f, fmt) {
-  const indices = Array.from({ length: f.total }, (_, i) => i);
-  const rotMap  = {};
-  f.pages.forEach((p, i) => { if (p.rotation) rotMap[i] = p.rotation; });
+  // send all pages in current order (including duplicates) using origIdx
+  const origIndices = f.pages.map(p => p.origIdx);
+  const rotMap = {};
+  f.pages.forEach((p, pos) => { if (p.rotation) rotMap[pos] = p.rotation; });
   setModalStatus('Splitting…', 'loading');
   const fd = new FormData();
-  fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(indices));
+  fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(origIndices));
   fd.append('rotations', JSON.stringify(rotMap)); fd.append('as_images', fmt !== 'pdf' ? 'true' : 'false');
   fd.append('image_format', fmt === 'png' ? 'png' : 'jpeg'); fd.append('password', S.filePasswords[f.id] || '');
   fd.append('key', f.key || '');
@@ -104,11 +111,10 @@ export async function splitAllPages(f, fmt) {
     const r = await fetch('/split', { method: 'POST', body: fd });
     if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
     triggerDownload(await r.blob(), f.filename.replace('.pdf', '') + '_split.zip');
-    setModalStatus(`${f.total} pages split.`, 'ok');
+    setModalStatus(`${f.pages.length} pages split.`, 'ok');
   } catch (e) { setModalStatus('Error: ' + e.message, 'err'); }
 }
 
-// shared helpers (used by both api and render)
 export function setStatus(msg, type = '') {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = 'status' + (type ? ' ' + type : '');

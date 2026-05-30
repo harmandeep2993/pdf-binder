@@ -1,5 +1,6 @@
 export let files        = [];
 export let dragSrc      = null;
+export let isDragging   = false;
 export let undoStack    = [];
 export let undoTimer    = null;
 export const filePasswords = {};   // file id -> password
@@ -11,6 +12,7 @@ export let pwResolve    = null;
 
 export function setFiles(v)        { files        = v; }
 export function setDragSrc(v)      { dragSrc      = v; }
+export function setIsDragging(v)   { isDragging   = v; }
 export function setUndoTimer(v)    { undoTimer    = v; }
 export function setModalFileId(v)  { modalFileId  = v; }
 export function setModalSel(v)     { modalSel     = v; }
