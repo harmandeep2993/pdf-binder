@@ -1,4 +1,4 @@
-# Pagefuse
+# PDF Binder
 
 Local PDF tool — merge, split, reorder, rotate, and extract pages. No cloud, no uploads.
 
@@ -28,7 +28,7 @@ uv sync
 ## Run
 
 ```bash
-uvicorn pagefuse:app --reload --port 8000
+uvicorn pdf_binder:app --reload --port 8000
 ```
 
 Open `http://localhost:8000`.
