@@ -124,22 +124,22 @@ export function renderPreview() {
   empty.style.display = 'none';
   count.textContent = items.length + ' pg';
 
-  // 2-column grid: panel 260px, padding 6px each side, gap 5px
-  const colW = Math.floor((260 - 12 - 5) / 2); // ~121px
-  const colH = Math.round(colW * 1.414);         // ~171px
+  // single-column doc-scroll: full panel width, A4 ratio
+  const thumbW = 260 - 16; // 8px padding each side = 244px
+  const thumbH = Math.round(thumbW * 1.414); // ~345px — A4
 
   items.forEach((item, n) => {
     const rot = item.rotation, sideways = rot === 90 || rot === 270;
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `position:relative;width:${colW}px;height:${colH}px;overflow:hidden;border-radius:4px;border:1px solid var(--b1);flex-shrink:0`;
+    wrapper.style.cssText = `position:relative;width:${thumbW}px;height:${thumbH}px;overflow:hidden;flex-shrink:0;border-radius:5px;border:1px solid var(--b1);box-shadow:0 2px 8px rgba(0,0,0,.25)`;
     const badge = document.createElement('div');
-    badge.style.cssText = `position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,.72);color:#999;font-size:.48rem;font-family:'DM Mono',monospace;padding:1px 4px;border-radius:4px;z-index:1;pointer-events:none;line-height:1.4`;
+    badge.style.cssText = `position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.72);color:#aaa;font-size:.52rem;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:5px;z-index:1;pointer-events:none`;
     badge.textContent = n + 1;
     const img = document.createElement('img');
     img.src = 'data:image/jpeg;base64,' + item.file.thumbs[item.pageIdx]; img.alt = '';
     img.style.cssText = sideways
-      ? `position:absolute;top:50%;left:50%;width:${colH}px;height:${colW}px;object-fit:cover;transform:translate(-50%,-50%) rotate(${rot}deg)`
-      : `display:block;width:${colW}px;height:${colH}px;object-fit:cover;` + (rot ? `transform:rotate(${rot}deg)` : '');
+      ? `position:absolute;top:50%;left:50%;width:${thumbH}px;height:${thumbW}px;object-fit:cover;transform:translate(-50%,-50%) rotate(${rot}deg)`
+      : `display:block;width:${thumbW}px;height:${thumbH}px;object-fit:cover;` + (rot ? `transform:rotate(${rot}deg)` : '');
     wrapper.appendChild(img); wrapper.appendChild(badge);
     pagesEl.appendChild(wrapper);
   });
