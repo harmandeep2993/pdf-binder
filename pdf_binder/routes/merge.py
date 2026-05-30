@@ -16,11 +16,13 @@ async def merge_pdfs(
     filename: str = Form("merged.pdf"),
     passwords: str = Form("{}"),
     keys: str = Form("{}"),
+    compress: str = Form("false"),
 ):
     try:
-        pages_list = json.loads(pages)
-        pw_map     = json.loads(passwords)
-        key_map    = json.loads(keys)
+        pages_list   = json.loads(pages)
+        pw_map       = json.loads(passwords)
+        key_map      = json.loads(keys)
+        do_compress  = compress.lower() == "true"
 
         buffers: dict[str, bytes] = {}
         for f in files:
@@ -46,6 +48,11 @@ async def merge_pdfs(
             added = writer.add_page(readers[fname].pages[pidx])
             if rotation:
                 added.rotate(rotation)
+
+        if do_compress:
+            for page in writer.pages:
+                page.compress_content_streams()
+            writer.compress_identical_objects(remove_identicals=True, remove_orphans=True)
 
         filename = Path(filename).name or "merged.pdf"
         if not filename.lower().endswith(".pdf"):

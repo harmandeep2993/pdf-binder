@@ -1,8 +1,8 @@
-import io, traceback
+import io, json, asyncio, traceback
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pypdf import PdfReader
-from ..pdf_utils import assert_pdf, open_reader, render_thumbs
+from ..pdf_utils import assert_pdf, open_reader, stream_thumbs
 from ..cache import cache_put
 
 router = APIRouter()
@@ -13,6 +13,7 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
         content = await file.read()
         assert_pdf(content, file.filename)
 
+        # Auth must succeed before streaming starts
         probe = PdfReader(io.BytesIO(content), strict=False)
         if probe.is_encrypted:
             try:
@@ -25,9 +26,32 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
 
         reader = open_reader(content, password)
         total  = len(reader.pages)
-        thumbs = await run_in_threadpool(render_thumbs, content, password, total)
         key    = cache_put(content)
-        return {"filename": file.filename, "total": total, "thumbs": thumbs, "size": len(content), "key": key}
+        fname  = file.filename
+        size   = len(content)
+        pw     = password
+
+        async def generate():
+            # 1. Send metadata immediately so the card appears right away
+            meta = {"type": "meta", "filename": fname, "total": total, "size": size, "key": key}
+            yield f"data: {json.dumps(meta)}\n\n"
+
+            # 2. Render thumbnails in a thread, stream each one as it finishes
+            queue: asyncio.Queue = asyncio.Queue()
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, stream_thumbs, content, pw, total, queue)
+
+            received = 0
+            while received < total:
+                item = await queue.get()
+                if item is None:
+                    break
+                i, thumb = item
+                received += 1
+                yield f"data: {json.dumps({'type':'thumb','index':i,'data':thumb})}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
     except HTTPException:
         raise
     except Exception as e:

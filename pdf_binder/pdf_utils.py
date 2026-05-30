@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 
-_MAX_UPLOAD = 100 * 1024 * 1024  # 100 MB
+_MAX_UPLOAD = 100 * 1024 * 1024  # 100 MB per file
 
 def assert_pdf(content: bytes, name: str = "file") -> None:
     if len(content) > _MAX_UPLOAD:
@@ -19,14 +19,29 @@ def open_reader(content: bytes, password: str = "") -> PdfReader:
     return reader
 
 def render_thumbs(content: bytes, password: str, total: int) -> list[str]:
+    """Render all thumbnails at once (used for batch mode)."""
     doc = pdfium.PdfDocument(content, password=password.encode() if password else None)
     thumbs = []
     for i in range(total):
-        page   = doc[i]
-        bitmap = page.render(scale=0.4)
-        buf    = io.BytesIO()
-        bitmap.to_pil().convert("RGB").save(buf, format="JPEG", quality=70)
-        thumbs.append(base64.b64encode(buf.getvalue()).decode())
-        page.close()
+        thumbs.append(_render_page(doc, i))
     doc.close()
     return thumbs
+
+def stream_thumbs(content: bytes, password: str, total: int, queue):
+    """Render thumbnails one-by-one and push to asyncio queue (for SSE streaming)."""
+    import asyncio
+    loop = asyncio.get_event_loop()
+    doc  = pdfium.PdfDocument(content, password=password.encode() if password else None)
+    for i in range(total):
+        thumb = _render_page(doc, i)
+        loop.call_soon_threadsafe(queue.put_nowait, (i, thumb))
+    doc.close()
+    loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+def _render_page(doc: pdfium.PdfDocument, i: int) -> str:
+    page   = doc[i]
+    bitmap = page.render(scale=0.4)
+    buf    = io.BytesIO()
+    bitmap.to_pil().convert("RGB").save(buf, format="JPEG", quality=70)
+    page.close()
+    return base64.b64encode(buf.getvalue()).decode()
