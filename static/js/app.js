@@ -1,7 +1,19 @@
 import * as S from './state.js';
-import { loadFiles, mergeFiles, extractSelected, splitAllPages, setStatus, setModalStatus, fmtSize, setPromptPassword } from './api.js';
-import { renderModalPages, updateModalCounts, snapshot, togglePageSel, setShowToast } from './render.js';
-import { setStorage, getStorage } from './helpers.js';
+import { loadFiles, mergeFiles, extractSelected, splitAllPages, setStatus, setModalStatus,
+         fmtSize, setPromptPassword, abortLoad } from './api.js';
+import { renderModalPages, updateModalCounts, snapshot, togglePageSel,
+         setShowToast, clearCardSelection, removeSelectedCards } from './render.js';
+import { setStorage, getStorage, trapFocus } from './helpers.js';
+
+// ── ERROR BOUNDARY ────────────────────────────────────────────────────────────
+window.addEventListener('error', e => {
+  console.error('[PDF Binder] Uncaught error:', e.error);
+  setStatus('Unexpected error — see console', 'err');
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('[PDF Binder] Unhandled rejection:', e.reason);
+  setStatus('Unexpected error — see console', 'err');
+});
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
 function showUndoToast(msg) {
@@ -12,6 +24,7 @@ function showUndoToast(msg) {
 setShowToast(showUndoToast);
 
 // ── PASSWORD ──────────────────────────────────────────────────────────────────
+let _releasePwFocus = null;
 export function promptPassword(filename, showError) {
   return new Promise(resolve => {
     S.setPwResolve(resolve);
@@ -19,16 +32,18 @@ export function promptPassword(filename, showError) {
     document.getElementById('pw-input').value = '';
     document.getElementById('pw-err').classList.toggle('show', !!showError);
     document.getElementById('pw-overlay').classList.add('show');
-    setTimeout(() => document.getElementById('pw-input').focus(), 80);
+    _releasePwFocus = trapFocus(document.querySelector('.dialog'));
   });
 }
 function pwSubmit() {
   const val = document.getElementById('pw-input').value;
   document.getElementById('pw-overlay').classList.remove('show');
+  _releasePwFocus?.(); _releasePwFocus = null;
   if (S.pwResolve) { S.pwResolve(val); S.setPwResolve(null); }
 }
 function pwCancel() {
   document.getElementById('pw-overlay').classList.remove('show');
+  _releasePwFocus?.(); _releasePwFocus = null;
   if (S.pwResolve) { S.pwResolve(null); S.setPwResolve(null); }
 }
 document.getElementById('pw-input').addEventListener('keydown', e => {
@@ -44,6 +59,7 @@ function doUndo() {
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────────────────
+let _releaseModalFocus = null;
 function openModal(fileId) {
   const file = S.files.find(f => f.id === fileId);
   if (!file || file.loading || file.error) return;
@@ -53,11 +69,13 @@ function openModal(fileId) {
   document.getElementById('modal-sub').textContent   = `${file.total} page${file.total > 1 ? 's' : ''} · ${fmtSize(file.size)}`;
   renderModalPages();
   document.getElementById('modal-bg').classList.add('show');
+  _releaseModalFocus = trapFocus(document.getElementById('modal'));
 }
 function closeModal() {
   const file = S.files.find(f => f.id === S.modalFileId);
   if (file) { file.pages.forEach((p, i) => { p.include = S.modalSel.has(i); }); S.filesChanged(); }
   document.getElementById('modal-bg').classList.remove('show');
+  _releaseModalFocus?.(); _releaseModalFocus = null;
   S.setModalFileId(null); S.setModalSel(new Set()); S.setModalDragSrc(null); setModalStatus('');
 }
 function getModalFile() { return S.files.find(f => f.id === S.modalFileId); }
@@ -74,7 +92,7 @@ function mDupSelected() {
   const ns=new Set(); idxs.forEach(i=>ns.add(i+1)); S.setModalSel(ns); f.total=f.pages.length; renderModalPages();
   setTimeout(()=>{ document.querySelectorAll('.mpage').forEach((c,i)=>{if(ns.has(i))c.classList.add('dup-flash');}); },50);
 }
-function rotPage(i, deg) { const f=getModalFile();if(!f)return; snapshot(); f.pages[i].rotation=((f.pages[i].rotation||0)+deg)%360; renderModalPages(); }
+function rotPage(i,deg)  { const f=getModalFile();if(!f)return; snapshot(); f.pages[i].rotation=((f.pages[i].rotation||0)+deg)%360; renderModalPages(); }
 function dupPage(i)      { const f=getModalFile();if(!f)return; snapshot(); f.pages.splice(i+1,0,{...f.pages[i],dupOf:i}); f.thumbs.splice(i+1,0,f.thumbs[i]); f.total=f.pages.length; renderModalPages(); }
 function deletePage(i) {
   const f=getModalFile();if(!f)return; snapshot();
@@ -90,11 +108,13 @@ function removeSelectedFromMerge() {
   setModalStatus('Pages excluded from merge.','ok'); S.emit('ui:toast', { msg: 'Pages excluded' });
 }
 function removeFileAction(id) {
-  snapshot(); S.setFiles(S.files.filter(f=>f.id!==id));
+  snapshot(); abortLoad(id); S.setFiles(S.files.filter(f=>f.id!==id));
   S.emit('ui:toast', { msg: 'File removed' });
 }
 function clearAll() {
-  if(!S.files.length)return; snapshot(); S.setFiles([]);
+  if (!S.files.length) return; snapshot();
+  S.files.forEach(f => abortLoad(f.id));
+  S.setFiles([]);
   S.emit('ui:toast', { msg: 'Cleared' });
 }
 
@@ -110,7 +130,10 @@ function doSplitAllPages() {
 // ── KEYBOARD ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (document.getElementById('pw-overlay').classList.contains('show')) return;
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal-bg').classList.contains('show')) closeModal();
+    else clearCardSelection();
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); doUndo(); }
   if (document.getElementById('modal-bg').classList.contains('show')) {
     if (e.key === 'a' && !e.ctrlKey && !e.metaKey) mSelectAll();
@@ -123,18 +146,18 @@ document.addEventListener('keydown', e => {
 document.addEventListener('dragover', e => {
   e.preventDefault();
   document.getElementById('drop-overlay').classList.add('show');
-  document.getElementById('empty-dropzone').classList.add('active');
+  document.getElementById('empty-dropzone')?.classList.add('active');
 });
 document.addEventListener('dragleave', e => {
   if (!e.relatedTarget) {
     document.getElementById('drop-overlay').classList.remove('show');
-    document.getElementById('empty-dropzone').classList.remove('active');
+    document.getElementById('empty-dropzone')?.classList.remove('active');
   }
 });
 document.addEventListener('drop', e => {
   e.preventDefault();
   document.getElementById('drop-overlay').classList.remove('show');
-  document.getElementById('empty-dropzone').classList.remove('active');
+  document.getElementById('empty-dropzone')?.classList.remove('active');
   const pdfs = [...e.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.pdf'));
   if (pdfs.length) loadFiles(pdfs);
 });
@@ -167,11 +190,12 @@ document.getElementById('theme-btn')?.addEventListener('click', toggleTheme);
 initTheme();
 setPromptPassword(promptPassword);
 
-// ── EXPOSE GLOBALS (inline HTML handlers) ────────────────────────────────────
+// ── EXPOSE GLOBALS ────────────────────────────────────────────────────────────
 Object.assign(window, {
   openModal, closeModal, removeFileAction, clearAll, doUndo,
   pwSubmit, pwCancel,
   mSelectAll, mSelectNone, mSelectOdd, mSelectEven,
   mRotateSel, mDupSelected, rotPage, dupPage, deletePage,
   removeSelectedFromMerge, extractSelected: doExtractSelected, splitAllPages: doSplitAllPages,
+  clearCardSelection, removeSelectedCards, abortLoad,
 });

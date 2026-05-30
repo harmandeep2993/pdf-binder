@@ -354,6 +354,11 @@ header {
 }
 .merge-btn:hover { filter:brightness(1.08) }
 .merge-btn:disabled { opacity:.28; cursor:not-allowed; filter:none }
+.compress-row {
+  display: flex; align-items:center; gap:7px;
+  font-size: .73rem; color:var(--mu2); cursor:pointer;
+}
+.compress-row input[type=checkbox] { accent-color:var(--ac); width:13px; height:13px; cursor:pointer }
 .status { font-size:.72rem; padding:5px 10px; border-radius:6px; display:none; text-align:center }
 .status.ok      { display:block; background:var(--greend); color:var(--green) }
 .status.err     { display:block; background:var(--redd);   color:var(--red)   }

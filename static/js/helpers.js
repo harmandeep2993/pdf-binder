@@ -1,4 +1,4 @@
-// Pure utilities and lightweight DOM helpers
+// Pure utilities and DOM helpers
 
 export const $  = (sel, ctx = document) => ctx.querySelector(sel);
 export const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
@@ -34,4 +34,39 @@ export function getStorage(key, fallback = null) {
 
 export function setStorage(key, value) {
   try { localStorage.setItem(key, String(value)); } catch {}
+}
+
+/**
+ * Trap keyboard focus inside `container` while it is open.
+ * Returns an unsubscribe function to remove the listener.
+ */
+export function trapFocus(container) {
+  const SELECTOR = [
+    'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+    'select:not([disabled])', 'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  function getFocusable() {
+    return [...container.querySelectorAll(SELECTOR)].filter(el => !el.closest('[hidden]'));
+  }
+
+  function onKeydown(e) {
+    if (e.key !== 'Tab') return;
+    const els = getFocusable();
+    if (!els.length) return;
+    const first = els[0], last = els[els.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey) {
+      if (active === first || !container.contains(active)) { e.preventDefault(); last.focus(); }
+    } else {
+      if (active === last  || !container.contains(active)) { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  container.addEventListener('keydown', onKeydown);
+  // Focus first element
+  const first = getFocusable()[0];
+  if (first) setTimeout(() => first.focus(), 50);
+  return () => container.removeEventListener('keydown', onKeydown);
 }
