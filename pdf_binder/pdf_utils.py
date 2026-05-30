@@ -27,11 +27,11 @@ def render_thumbs(content: bytes, password: str, total: int) -> list[str]:
     doc.close()
     return thumbs
 
-def stream_thumbs(content: bytes, password: str, total: int, queue):
-    """Render thumbnails one-by-one and push to asyncio queue (for SSE streaming)."""
-    import asyncio
-    loop = asyncio.get_event_loop()
-    doc  = pdfium.PdfDocument(content, password=password.encode() if password else None)
+def stream_thumbs(content: bytes, password: str, total: int, queue, loop):
+    """Render thumbnails one-by-one and push to asyncio queue (for SSE streaming).
+    loop must be passed from the calling async context — threads have no event loop.
+    """
+    doc = pdfium.PdfDocument(content, password=password.encode() if password else None)
     for i in range(total):
         thumb = _render_page(doc, i)
         loop.call_soon_threadsafe(queue.put_nowait, (i, thumb))

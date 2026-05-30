@@ -38,8 +38,8 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
 
             # 2. Render thumbnails in a thread, stream each one as it finishes
             queue: asyncio.Queue = asyncio.Queue()
-            loop = asyncio.get_event_loop()
-            loop.run_in_executor(None, stream_thumbs, content, pw, total, queue)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, stream_thumbs, content, pw, total, queue, loop)
 
             received = 0
             while received < total:
