@@ -137,6 +137,38 @@ document.getElementById('file-input').addEventListener('change', function () { l
 document.getElementById('merge-btn').addEventListener('click', mergeFiles);
 document.getElementById('modal-bg').addEventListener('click', e => { if (e.target === document.getElementById('modal-bg')) closeModal(); });
 
+// ── THEME ──
+function initTheme() {
+  const saved = localStorage.getItem('pf-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : '');
+  updateThemeIcon(saved);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem('pf-theme') || 'dark';
+  const next = cur === 'light' ? 'dark' : 'light';
+  localStorage.setItem('pf-theme', next);
+  document.documentElement.setAttribute('data-theme', next === 'light' ? 'light' : '');
+  updateThemeIcon(next);
+}
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('theme-btn');
+  if (!btn) return;
+  btn.innerHTML = theme === 'light'
+    ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`
+    : `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
+}
+document.getElementById('theme-btn')?.addEventListener('click', toggleTheme);
+
+// ── WORKSPACE NAME ──
+const wsInput = document.getElementById('workspace-name');
+if (wsInput) {
+  wsInput.value = localStorage.getItem('pf-workspace') || '';
+  wsInput.addEventListener('input', () => localStorage.setItem('pf-workspace', wsInput.value));
+}
+
+// ── INIT ──
+initTheme();
+
 // ── INJECT CALLBACKS (break circular deps) ──
 setPromptPassword(promptPassword);
 setShowUndoToast(showUndoToast);

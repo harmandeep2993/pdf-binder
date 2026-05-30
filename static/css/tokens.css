@@ -10,3 +10,14 @@
   --r:8px;--rr:12px;
   --shadow:0 8px 32px rgba(0,0,0,.5);
 }
+
+[data-theme="light"]{
+  --bg:#f0f0f0;--s1:#ffffff;--s2:#e8e8e8;--s3:#dcdcdc;
+  --b1:#ddd;--b2:#ccc;--b3:#aaa;
+  --tx:#111;--mu:#aaa;--mu2:#666;
+  --acd:rgba(100,160,0,.08);
+  --redd:rgba(220,50,50,.1);
+  --greend:rgba(30,160,90,.1);
+  --oranged:rgba(200,100,20,.1);
+  --shadow:0 8px 32px rgba(0,0,0,.15);
+}
