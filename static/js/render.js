@@ -1,10 +1,15 @@
 import * as S from './state.js';
-import { fmtSize, setModalStatus, checkSizeWarn, extractSelected, splitAllPages } from './api.js';
+import { fmtSize, setModalStatus, extractSelected, splitAllPages } from './api.js';
 
-let _showUndoToast = () => {};
-export function setShowUndoToast(fn) { _showUndoToast = fn; }
-const showUndoToast = (...a) => _showUndoToast(...a);
+// Subscribe to state events — render runs automatically on state change
+S.on('files:change', () => { renderGrid(); renderPreview(); });
+S.on('modal:sel',    () => updateModalCounts());
+S.on('ui:toast',     ({ msg }) => _showToast(msg));
 
+let _showToast = () => {};
+export function setShowToast(fn) { _showToast = fn; }
+
+// ── GRID ──────────────────────────────────────────────────────────────────────
 export function renderGrid() {
   const grid  = document.getElementById('file-grid');
   const empty = document.getElementById('empty');
@@ -20,11 +25,12 @@ export function renderGrid() {
 
   let order = 1;
   S.files.forEach(file => {
-    const card = document.createElement('div');
-    const included   = file.pages.filter(p => p.include).length;
-    const partial    = !file.loading && !file.error && included < file.total && included > 0;
+    const included    = file.pages.filter(p => p.include).length;
+    const partial     = !file.loading && !file.error && included < file.total && included > 0;
     const allExcluded = !file.loading && !file.error && included === 0 && file.total > 0;
-    const cardOrder  = !file.loading && !file.error ? order++ : '';
+    const cardOrder   = !file.loading && !file.error ? order++ : '';
+
+    const card = document.createElement('div');
     card.className = 'fcard' + (allExcluded ? ' all-excluded' : '');
     card.draggable = !file.loading; card.dataset.id = file.id;
 
@@ -36,7 +42,6 @@ export function renderGrid() {
         : `<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="opacity:.25"><path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/><path d="M13 2v6h6"/></svg>`;
 
     const pgBadgeClass = partial ? ' partial' : allExcluded ? ' none' : '';
-
     card.innerHTML = `
       <div class="fcard-thumb">
         ${thumb}
@@ -61,7 +66,6 @@ export function renderGrid() {
       card.addEventListener('mouseleave', () => { clearInterval(t); if (img) img.src = 'data:image/jpeg;base64,' + file.thumbs[0]; });
     }
 
-    // keyboard: Enter/Space opens inspect modal
     if (!file.loading && !file.error) {
       card.setAttribute('tabindex', '0');
       card.addEventListener('keydown', e => {
@@ -97,13 +101,12 @@ export function renderGrid() {
         const [m] = S.files.splice(fi, 1);
         let insertAt = (fi < ti ? ti - 1 : ti) + (after ? 1 : 0);
         S.files.splice(Math.min(insertAt, S.files.length), 0, m);
-        S.setDragSrc(null); renderGrid();
+        S.setDragSrc(null); S.filesChanged();
       });
     }
     grid.appendChild(card);
   });
 
-  // end-zone: only rendered when files exist; visible only during drag via CSS
   if (S.files.some(f => !f.loading)) {
     const ez = document.createElement('div');
     ez.className = 'fcard-end-zone';
@@ -117,18 +120,17 @@ export function renderGrid() {
       if (fi < 0) return;
       const [m] = S.files.splice(fi, 1);
       S.files.push(m);
-      S.setDragSrc(null); renderGrid();
+      S.setDragSrc(null); S.filesChanged();
     });
     grid.appendChild(ez);
   }
-
-  renderPreview();
 }
 
 export function clearCardDrag() {
   document.querySelectorAll('.fcard').forEach(c => c.classList.remove('drag-over', 'drop-before', 'drop-after'));
 }
 
+// ── PREVIEW ───────────────────────────────────────────────────────────────────
 export function renderPreview() {
   const pagesEl = document.getElementById('preview-pages');
   const empty   = document.getElementById('preview-empty');
@@ -143,9 +145,7 @@ export function renderPreview() {
   empty.style.display = 'none';
   count.textContent = items.length + ' pg';
 
-  const thumbW = 260 - 16;
-  const thumbH = Math.round(thumbW * 1.414);
-
+  const thumbW = 260 - 16, thumbH = Math.round(thumbW * 1.414);
   items.forEach((item, n) => {
     const rot = item.rotation, sideways = rot === 90 || rot === 270;
     const wrapper = document.createElement('div');
@@ -163,6 +163,7 @@ export function renderPreview() {
   });
 }
 
+// ── MODAL PAGES ───────────────────────────────────────────────────────────────
 export function renderModalPages() {
   const file = S.files.find(f => f.id === S.modalFileId); if (!file) return;
   const grid = document.getElementById('modal-page-grid');
@@ -198,7 +199,6 @@ export function renderModalPages() {
       snapshot();
       const [mp] = file.pages.splice(src, 1);
       const [mt] = file.thumbs.splice(src, 1);
-      // adjust insert index after removal
       const insertAt = src < i ? i - 1 : i;
       const newSel = new Set();
       S.modalSel.forEach(s => {
@@ -232,6 +232,7 @@ export function updateModalCounts() {
   document.getElementById('modal-remove-btn').disabled  = n === 0;
 }
 
+// ── UNDO SNAPSHOT ─────────────────────────────────────────────────────────────
 export function snapshot() {
   S.undoStack.push(S.files.map(f => ({ ...f, pages: f.pages.map(p => ({ ...p })) })));
   if (S.undoStack.length > 20) S.undoStack.shift();

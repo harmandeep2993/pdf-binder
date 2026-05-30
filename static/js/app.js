@@ -1,8 +1,17 @@
 import * as S from './state.js';
-import { loadFiles, checkSizeWarn, mergeFiles, extractSelected, splitAllPages, setStatus, setModalStatus, fmtSize, setPromptPassword } from './api.js';
-import { renderGrid, renderPreview, renderModalPages, updateModalCounts, snapshot, togglePageSel, setShowUndoToast } from './render.js';
+import { loadFiles, mergeFiles, extractSelected, splitAllPages, setStatus, setModalStatus, fmtSize, setPromptPassword } from './api.js';
+import { renderModalPages, updateModalCounts, snapshot, togglePageSel, setShowToast } from './render.js';
+import { setStorage, getStorage } from './helpers.js';
 
-// ── PASSWORD ──
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showUndoToast(msg) {
+  document.getElementById('undo-msg').textContent = msg;
+  document.getElementById('undo-toast').classList.add('show');
+  S.setUndoTimer(setTimeout(() => document.getElementById('undo-toast').classList.remove('show'), 4000));
+}
+setShowToast(showUndoToast);
+
+// ── PASSWORD ──────────────────────────────────────────────────────────────────
 export function promptPassword(filename, showError) {
   return new Promise(resolve => {
     S.setPwResolve(resolve);
@@ -27,21 +36,14 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
   if (e.key === 'Escape') pwCancel();
 });
 
-// ── UNDO ──
-export function showUndoToast(msg) {
-  document.getElementById('undo-msg').textContent = msg;
-  document.getElementById('undo-toast').classList.add('show');
-  clearTimeout(S.undoTimer);
-  S.setUndoTimer(setTimeout(hideUndoToast, 4000));
-}
-function hideUndoToast() { document.getElementById('undo-toast').classList.remove('show'); }
+// ── UNDO ──────────────────────────────────────────────────────────────────────
 function doUndo() {
   if (!S.undoStack.length) return;
   S.setFiles(S.undoStack.pop());
-  renderGrid(); hideUndoToast();
+  document.getElementById('undo-toast').classList.remove('show');
 }
 
-// ── MODAL ──
+// ── MODAL ─────────────────────────────────────────────────────────────────────
 function openModal(fileId) {
   const file = S.files.find(f => f.id === fileId);
   if (!file || file.loading || file.error) return;
@@ -54,7 +56,7 @@ function openModal(fileId) {
 }
 function closeModal() {
   const file = S.files.find(f => f.id === S.modalFileId);
-  if (file) { file.pages.forEach((p, i) => { p.include = S.modalSel.has(i); }); renderGrid(); renderPreview(); }
+  if (file) { file.pages.forEach((p, i) => { p.include = S.modalSel.has(i); }); S.filesChanged(); }
   document.getElementById('modal-bg').classList.remove('show');
   S.setModalFileId(null); S.setModalSel(new Set()); S.setModalDragSrc(null); setModalStatus('');
 }
@@ -79,29 +81,33 @@ function deletePage(i) {
   f.pages.splice(i,1); f.thumbs.splice(i,1); f.total=f.pages.length;
   S.modalSel.delete(i);
   S.setModalSel(new Set([...S.modalSel].map(s=>s>i?s-1:s)));
-  renderModalPages(); showUndoToast('Page removed');
+  renderModalPages(); S.emit('ui:toast', { msg: 'Page removed' });
 }
 function removeSelectedFromMerge() {
   const f=getModalFile();if(!f)return; snapshot();
   S.modalSel.forEach(i=>{if(f.pages[i])f.pages[i].include=false;});
-  S.modalSel.clear(); renderModalPages(); renderGrid();
-  setModalStatus('Pages excluded from merge.','ok'); showUndoToast('Pages excluded');
+  S.modalSel.clear(); renderModalPages(); S.filesChanged();
+  setModalStatus('Pages excluded from merge.','ok'); S.emit('ui:toast', { msg: 'Pages excluded' });
 }
-function removeFileAction(id) { snapshot(); S.setFiles(S.files.filter(f=>f.id!==id)); renderGrid(); checkSizeWarn(); showUndoToast('File removed'); }
-function clearAll() { if(!S.files.length)return; snapshot(); S.setFiles([]); renderGrid(); checkSizeWarn(); showUndoToast('Cleared'); }
+function removeFileAction(id) {
+  snapshot(); S.setFiles(S.files.filter(f=>f.id!==id));
+  S.emit('ui:toast', { msg: 'File removed' });
+}
+function clearAll() {
+  if(!S.files.length)return; snapshot(); S.setFiles([]);
+  S.emit('ui:toast', { msg: 'Cleared' });
+}
 
 function doExtractSelected() {
   const f=getModalFile();if(!f||!S.modalSel.size)return;
-  const fmt=document.getElementById('fmt-select').value;
-  const indices=[...S.modalSel].sort((a,b)=>a-b);
-  extractSelected(f,fmt,indices);
+  extractSelected(f, document.getElementById('fmt-select').value, [...S.modalSel].sort((a,b)=>a-b));
 }
 function doSplitAllPages() {
   const f=getModalFile();if(!f)return;
-  splitAllPages(f,document.getElementById('fmt-select').value);
+  splitAllPages(f, document.getElementById('fmt-select').value);
 }
 
-// ── KEYBOARD ──
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (document.getElementById('pw-overlay').classList.contains('show')) return;
   if (e.key === 'Escape') closeModal();
@@ -113,7 +119,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── DRAG DROP ──
+// ── DRAG DROP ─────────────────────────────────────────────────────────────────
 document.addEventListener('dragover', e => {
   e.preventDefault();
   document.getElementById('drop-overlay').classList.add('show');
@@ -136,16 +142,15 @@ document.getElementById('file-input').addEventListener('change', function () { l
 document.getElementById('merge-btn').addEventListener('click', mergeFiles);
 document.getElementById('modal-bg').addEventListener('click', e => { if (e.target === document.getElementById('modal-bg')) closeModal(); });
 
-// ── THEME ──
+// ── THEME ─────────────────────────────────────────────────────────────────────
 function initTheme() {
-  const saved = localStorage.getItem('pf-theme') || 'dark';
+  const saved = getStorage('pf-theme', 'dark');
   document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : '');
   updateThemeIcon(saved);
 }
 function toggleTheme() {
-  const cur = localStorage.getItem('pf-theme') || 'dark';
-  const next = cur === 'light' ? 'dark' : 'light';
-  localStorage.setItem('pf-theme', next);
+  const next = getStorage('pf-theme', 'dark') === 'light' ? 'dark' : 'light';
+  setStorage('pf-theme', next);
   document.documentElement.setAttribute('data-theme', next === 'light' ? 'light' : '');
   updateThemeIcon(next);
 }
@@ -158,14 +163,11 @@ function updateThemeIcon(theme) {
 }
 document.getElementById('theme-btn')?.addEventListener('click', toggleTheme);
 
-// ── INIT ──
+// ── INIT ──────────────────────────────────────────────────────────────────────
 initTheme();
-
-// ── INJECT CALLBACKS (break circular deps) ──
 setPromptPassword(promptPassword);
-setShowUndoToast(showUndoToast);
 
-// ── EXPOSE GLOBALS (for inline handlers in dynamic HTML) ──
+// ── EXPOSE GLOBALS (inline HTML handlers) ────────────────────────────────────
 Object.assign(window, {
   openModal, closeModal, removeFileAction, clearAll, doUndo,
   pwSubmit, pwCancel,

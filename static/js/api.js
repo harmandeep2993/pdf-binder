@@ -1,22 +1,34 @@
 import * as S from './state.js';
-import { renderGrid, renderPreview } from './render.js';
+import { fmtSize, triggerDownload, setStatus, setModalStatus } from './helpers.js';
 
-// injected by app.js at init to break circular dep
+export { fmtSize, setStatus, setModalStatus };  // re-export for consumers
+
+// injected by app.js to break circular dep (async password prompt)
 let _promptPassword = async () => null;
 export function setPromptPassword(fn) { _promptPassword = fn; }
 
+// ── SIZE WARNING ──────────────────────────────────────────────────────────────
+export function checkSizeWarn() {
+  const mb = S.files.reduce((s, f) => s + (f.size || 0), 0) / 1048576;
+  const el = document.getElementById('size-warn');
+  if (mb > 40) { el.textContent = `⚠ Total ~${mb.toFixed(0)} MB — merging may be slow.`; el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+S.on('files:change', checkSizeWarn);
+
+// ── LOAD FILES ────────────────────────────────────────────────────────────────
 export async function loadFiles(newFiles) {
   for (const file of newFiles) {
     const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     S.files.push({ id, filename: file.name, fileObj: file, total: 0, thumbs: [], size: 0, pages: [], loading: true });
-    renderGrid();
+    S.filesChanged();
     await loadOneFile(id, file, S.filePasswords[id] || '');
   }
 }
 
 export async function loadOneFile(id, file, password) {
   const tryLoad = async (pw, showPwError) => {
-    if (pw === null) { S.setFiles(S.files.filter(f => f.id !== id)); renderGrid(); return; }
+    if (pw === null) { S.setFiles(S.files.filter(f => f.id !== id)); return; }
     const fd = new FormData();
     fd.append('file', file); fd.append('password', pw);
     try {
@@ -25,7 +37,7 @@ export async function loadOneFile(id, file, password) {
       if (!r.ok) {
         const err = await r.json().catch(() => ({ detail: 'Unknown error' }));
         const f = S.files.find(x => x.id === id);
-        if (f) { f.loading = false; f.error = err.detail; renderGrid(); }
+        if (f) { f.loading = false; f.error = err.detail; S.filesChanged(); }
         return;
       }
       const d = await r.json();
@@ -34,34 +46,25 @@ export async function loadOneFile(id, file, password) {
       if (f) {
         f.loading = false; f.total = d.total; f.thumbs = d.thumbs;
         f.size = d.size || 0; f.key = d.key || '';
-        // origIdx tracks the source page in the original PDF (survives reorder/duplicate)
         f.pages = Array.from({ length: d.total }, (_, i) => ({ include: true, rotation: 0, origIdx: i }));
-        renderGrid(); checkSizeWarn();
+        S.filesChanged();
       }
     } catch (e) {
       const f = S.files.find(x => x.id === id);
-      if (f) { f.loading = false; f.error = e.message; renderGrid(); }
+      if (f) { f.loading = false; f.error = e.message; S.filesChanged(); }
     }
   };
   await tryLoad(password, false);
 }
 
-export function checkSizeWarn() {
-  const mb = S.files.reduce((s, f) => s + (f.size || 0), 0) / 1048576;
-  const el = document.getElementById('size-warn');
-  if (mb > 40) { el.textContent = `⚠ Total input ~${mb.toFixed(0)} MB — merging may be slow.`; el.classList.add('show'); }
-  else el.classList.remove('show');
-}
-
+// ── MERGE ─────────────────────────────────────────────────────────────────────
 export async function mergeFiles() {
   const btn   = document.getElementById('merge-btn');
   const fname = document.getElementById('out-filename').value.trim() || 'merged.pdf';
   btn.disabled = true; setStatus('Merging…', 'loading');
-  const fd = new FormData();
-  const pagesList = [];
+  const fd = new FormData(), pagesList = [];
   S.files.forEach(f => {
     fd.append('files', f.fileObj);
-    // use origIdx so duplicated/reordered pages map to correct source page
     f.pages.forEach(p => { if (p.include) pagesList.push({ file: f.filename, page: p.origIdx, rotation: p.rotation || 0 }); });
   });
   fd.append('pages', JSON.stringify(pagesList));
@@ -77,8 +80,8 @@ export async function mergeFiles() {
   btn.disabled = false;
 }
 
+// ── EXTRACT / SPLIT ───────────────────────────────────────────────────────────
 export async function extractSelected(f, fmt, selIndices) {
-  // selIndices = frontend page array indices (may contain duplicates)
   setModalStatus('Extracting…', 'loading');
   const origIndices = selIndices.map(i => f.pages[i].origIdx);
   const rotMap = {};
@@ -97,7 +100,6 @@ export async function extractSelected(f, fmt, selIndices) {
 }
 
 export async function splitAllPages(f, fmt) {
-  // send all pages in current order (including duplicates) using origIdx
   const origIndices = f.pages.map(p => p.origIdx);
   const rotMap = {};
   f.pages.forEach((p, pos) => { if (p.rotation) rotMap[pos] = p.rotation; });
@@ -113,25 +115,4 @@ export async function splitAllPages(f, fmt) {
     triggerDownload(await r.blob(), f.filename.replace('.pdf', '') + '_split.zip');
     setModalStatus(`${f.pages.length} pages split.`, 'ok');
   } catch (e) { setModalStatus('Error: ' + e.message, 'err'); }
-}
-
-export function setStatus(msg, type = '') {
-  const el = document.getElementById('status');
-  el.textContent = msg; el.className = 'status' + (type ? ' ' + type : '');
-}
-export function setModalStatus(msg, type = '') {
-  const el = document.getElementById('modal-status');
-  el.textContent = msg; el.className = 'modal-status' + (type ? ' ' + type : '');
-}
-export function fmtSize(b) {
-  if (!b) return '';
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-  return (b / 1048576).toFixed(1) + ' MB';
-}
-export function triggerDownload(blob, name) {
-  const u = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = u; a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(u), 5000);
 }
