@@ -55,8 +55,8 @@ export function renderGrid() {
       </div>
       <div class="fcard-footer">
         <div class="fcard-name" title="${file.filename}">${file.filename}</div>
-        ${file.size ? `<div class="fcard-size">${fmtSize(file.size)}</div>` : ''}
-        ${file.error ? `<div class="fcard-size" style="color:var(--red)">Error loading</div>` : ''}
+        ${file.size ? `<div class="fcard-meta">${fmtSize(file.size)} &middot; ${file.total} pg</div>` : ''}
+        ${file.error ? `<div class="fcard-meta" style="color:var(--red)">Error loading</div>` : ''}
       </div>`;
 
     if (!file.loading && !file.error && file.thumbs.length > 1) {

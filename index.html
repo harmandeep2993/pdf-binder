@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PDF Binder</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/static/css/tokens.css">
 <link rel="stylesheet" href="/static/css/base.css">
 <link rel="stylesheet" href="/static/css/layout.css">
@@ -14,49 +12,80 @@
 </head>
 <body>
 
-<div id="drop-overlay"><span>Drop PDFs here</span></div>
+<div id="drop-overlay">
+  <span id="drop-overlay-label">Drop PDFs here</span>
+</div>
 <div id="size-warn"></div>
 
+<!-- ── HEADER ── -->
 <header>
   <div class="logo">
     <div class="logo-mark">
-      <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="1" y="2" width="7" height="9" rx="1" fill="#0a0a0a" opacity=".9"/>
-        <rect x="5" y="4" width="7" height="9" rx="1" fill="#0a0a0a" opacity=".55"/>
-        <path d="M3 6h3M3 8h2" stroke="rgba(255,255,255,0.75)" stroke-width="1" stroke-linecap="round"/>
+      <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="2" width="8" height="11" rx="1.5" fill="#0a0a0a" opacity=".9"/>
+        <rect x="6" y="4" width="8" height="11" rx="1.5" fill="#0a0a0a" opacity=".5"/>
+        <path d="M3.5 7h4M3.5 9.5h3" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
     </div>
-    <h1>PDF Binder</h1>
+    <div class="logo-text">
+      <h1>PDF Binder</h1>
+      <span class="logo-sub">local &middot; private</span>
+    </div>
   </div>
-  <span class="hbadge">local</span>
-<div class="header-actions">
+  <div class="header-right">
     <span id="total-badge"></span>
-    <button class="theme-btn" id="theme-btn" title="Toggle theme"></button>
+    <button class="icon-btn" id="theme-btn" title="Toggle theme" aria-label="Toggle theme"></button>
   </div>
 </header>
 
+<!-- ── TOOLBAR ── -->
 <div class="toolbar">
-  <button class="tbtn" onclick="document.getElementById('file-input').click()">
-    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1"/></svg>
+  <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-8m0 0-3 3m3-3 3 3M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1"/>
+    </svg>
     Add PDFs
   </button>
   <input type="file" id="file-input" multiple accept=".pdf">
-  <button class="tbtn" onclick="clearAll()">Clear all</button>
+  <button class="btn btn-ghost" onclick="clearAll()">Clear all</button>
 </div>
 
+<!-- ── MAIN LAYOUT ── -->
 <div id="main-layout" style="flex:1;display:flex;overflow:hidden;min-height:0">
-  <div id="canvas" style="flex:1;overflow-y:auto;padding:1.2rem 1.4rem;min-width:0">
+
+  <!-- FILE CANVAS -->
+  <div id="canvas" style="flex:1;overflow-y:auto;padding:20px;min-width:0">
     <div class="empty" id="empty">
-      <div class="dropzone" id="empty-dropzone">
-        <div class="dz-icon">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+      <div class="empty-inner" id="empty-dropzone">
+        <div class="empty-icon">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/>
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 2v6h6"/>
           </svg>
         </div>
-        <p>Drop PDFs here</p>
-        <small>or click <b style="color:var(--mu2)">Add PDFs</b> above &middot; drag cards to reorder</small>
-        <small style="margin-top:2px"><kbd>Ctrl Z</kbd> undo &nbsp;&middot;&nbsp; <kbd>Esc</kbd> close</small>
+        <h2>Drop PDFs to get started</h2>
+        <p>Drag files here or click <strong>Add PDFs</strong> above</p>
+        <div class="empty-steps">
+          <div class="empty-step">
+            <span class="empty-step-num">1</span>
+            Add PDFs
+          </div>
+          <span class="empty-step-arrow">→</span>
+          <div class="empty-step">
+            <span class="empty-step-num">2</span>
+            Arrange
+          </div>
+          <span class="empty-step-arrow">→</span>
+          <div class="empty-step">
+            <span class="empty-step-num">3</span>
+            Download
+          </div>
+        </div>
+        <div class="empty-hints">
+          <span class="empty-hint"><kbd>Ctrl Z</kbd> undo</span>
+          <span class="empty-hint"><kbd>Esc</kbd> close</span>
+          <span class="empty-hint"><kbd>Enter</kbd> inspect</span>
+        </div>
       </div>
     </div>
     <div id="file-grid"></div>
@@ -65,50 +94,63 @@
   <!-- PREVIEW PANEL -->
   <div id="preview-panel">
     <div class="preview-hd">
-      <span class="preview-hd-label">Preview</span>
+      <span class="preview-hd-label">Output Preview</span>
       <span id="preview-count"></span>
     </div>
 
     <div id="preview-scroll">
       <div id="preview-empty">
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="opacity:.18"><path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/><path d="M13 2v6h6"/></svg>
-        <span style="font-size:.68rem">Add PDFs to preview</span>
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/>
+          <path d="M13 2v6h6"/>
+        </svg>
+        <span>Add PDFs to see preview</span>
       </div>
       <div id="preview-pages"></div>
     </div>
 
-    <!-- MERGE LIVES HERE -->
+    <!-- MERGE FOOTER -->
     <div class="preview-footer">
+      <span class="output-label">Output file</span>
       <div class="fname-wrap">
-        <span class="fname-label">out</span>
-        <input id="out-filename" type="text" value="merged.pdf" spellcheck="false">
+        <span class="fname-label">pdf</span>
+        <input id="out-filename" type="text" value="merged.pdf" spellcheck="false" aria-label="Output filename">
       </div>
       <button class="merge-btn" id="merge-btn" disabled>
-        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4-4 4m0 0-4-4m4 4V4"/>
+        </svg>
         Merge &amp; Download
       </button>
       <span class="status" id="status"></span>
     </div>
   </div>
-</div>
 
+</div><!-- /#main-layout -->
+
+<!-- UNDO TOAST -->
 <div id="undo-toast">
   <span id="undo-msg">Undone</span>
   <button onclick="doUndo()">Undo</button>
 </div>
 
-<!-- PASSWORD DIALOG -->
+<!-- PASSWORD MODAL -->
 <div class="overlay" id="pw-overlay">
   <div class="dialog">
-    <div>
-      <h2>
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        Password protected
-      </h2>
-      <p id="pw-filename" style="margin-top:4px"></p>
+    <div class="dialog-header">
+      <div class="dialog-icon">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Password required</h2>
+        <p id="pw-filename" style="margin-top:2px;font-size:.72rem;color:var(--mu2)"></p>
+      </div>
     </div>
-    <input class="dinput" type="password" id="pw-input" placeholder="Enter PDF password">
-    <div class="derr" id="pw-err">Wrong password, try again.</div>
+    <input class="dinput" type="password" id="pw-input" placeholder="Enter PDF password" autocomplete="current-password">
+    <div class="derr" id="pw-err">Incorrect password — try again</div>
     <div class="dbtns">
       <button class="dbtn-cancel" onclick="pwCancel()">Cancel</button>
       <button class="dbtn-ok" onclick="pwSubmit()">Unlock</button>
@@ -120,14 +162,21 @@
 <div id="modal-bg">
   <div id="modal">
     <div class="mhead">
+      <div class="mhead-icon">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V8l-6-6z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 2v6h6"/>
+        </svg>
+      </div>
       <div class="mhead-info">
         <div class="mtitle" id="modal-title"></div>
         <div class="msub" id="modal-sub"></div>
       </div>
-      <button class="mclose" onclick="closeModal()">✕</button>
+      <button class="mclose" onclick="closeModal()" aria-label="Close">✕</button>
     </div>
+
     <div class="mtoolbar">
-      <button class="mtbtn" onclick="mSelectAll()">All</button>
+      <button class="mtbtn" onclick="mSelectAll()">Select all</button>
       <button class="mtbtn" onclick="mSelectNone()">None</button>
       <button class="mtbtn" onclick="mSelectOdd()">Odd</button>
       <button class="mtbtn" onclick="mSelectEven()">Even</button>
@@ -136,21 +185,27 @@
       <button class="mtbtn" onclick="mRotateSel(180)">↻ 180°</button>
       <button class="mtbtn" onclick="mRotateSel(270)">↺ 90°</button>
       <div class="mtsep"></div>
-      <button class="mtbtn" onclick="mDupSelected()">⧉ Dup</button>
+      <button class="mtbtn" onclick="mDupSelected()">⧉ Duplicate</button>
       <span class="sel-count" id="sel-count">0 selected</span>
     </div>
+
     <div class="mbody">
       <div class="page-grid-modal" id="modal-page-grid"></div>
     </div>
+
     <div class="mfoot">
-      <button class="mfbtn primary" id="modal-extract-btn" disabled onclick="extractSelected()">↓ Extract selected</button>
+      <button class="mfbtn primary" id="modal-extract-btn" disabled onclick="extractSelected()">
+        ↓ Extract selected
+      </button>
       <select class="fmt-select" id="fmt-select">
         <option value="pdf">as PDF</option>
         <option value="jpeg">as JPEG</option>
         <option value="png">as PNG</option>
       </select>
       <button class="mfbtn ghost" onclick="splitAllPages()">Split all pages</button>
-      <button class="mfbtn danger" id="modal-remove-btn" disabled onclick="removeSelectedFromMerge()">Remove from merge</button>
+      <button class="mfbtn danger" id="modal-remove-btn" disabled onclick="removeSelectedFromMerge()">
+        Remove from merge
+      </button>
       <span class="modal-status" id="modal-status"></span>
     </div>
   </div>

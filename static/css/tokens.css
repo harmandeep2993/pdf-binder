@@ -1,23 +1,67 @@
-:root{
-  --bg:#0d0d0d;--s1:#141414;--s2:#1c1c1c;--s3:#232323;
-  --b1:#222;--b2:#2e2e2e;--b3:#404040;
-  --tx:#ededed;--mu:#555;--mu2:#888;
-  --ac:#d4f73c;--acd:rgba(212,247,60,.07);
-  --red:#f87171;--redd:rgba(248,113,113,.12);
-  --green:#34d399;--greend:rgba(52,211,153,.1);
-  --orange:#fb923c;--oranged:rgba(251,146,60,.12);
-  --blue:#60a5fa;
-  --r:8px;--rr:12px;
-  --shadow:0 8px 32px rgba(0,0,0,.5);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* surfaces */
+  --bg:   #0b0b0b;
+  --s1:   #111111;
+  --s2:   #1a1a1a;
+  --s3:   #222222;
+
+  /* borders */
+  --b1:   #242424;
+  --b2:   #303030;
+  --b3:   #424242;
+
+  /* text */
+  --tx:   #efefef;
+  --mu:   #505050;
+  --mu2:  #888888;
+
+  /* accent */
+  --ac:      #d4f73c;
+  --ac-fg:   #0a0a0a;
+  --acd:     rgba(212,247,60,.07);
+  --ac-ring: rgba(212,247,60,.25);
+
+  /* status */
+  --red:    #f87171; --redd:   rgba(248,113,113,.12);
+  --green:  #4ade80; --greend: rgba(74,222,128,.10);
+  --orange: #fb923c; --oranged:rgba(251,146,60,.12);
+  --blue:   #60a5fa;
+
+  /* spacing scale */
+  --sp1:2px; --sp2:4px; --sp3:8px; --sp4:12px;
+  --sp5:16px; --sp6:20px; --sp7:24px; --sp8:32px;
+
+  /* radius */
+  --r:    8px;
+  --rr:   12px;
+  --rrr:  16px;
+  --pill: 999px;
+
+  /* shadow */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.5);
+  --shadow:    0 4px 20px rgba(0,0,0,.55);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,.65);
 }
 
-[data-theme="light"]{
-  --bg:#f0f0f0;--s1:#ffffff;--s2:#e8e8e8;--s3:#dcdcdc;
-  --b1:#ddd;--b2:#ccc;--b3:#aaa;
-  --tx:#111;--mu:#aaa;--mu2:#666;
-  --acd:rgba(100,160,0,.08);
-  --redd:rgba(220,50,50,.1);
-  --greend:rgba(30,160,90,.1);
-  --oranged:rgba(200,100,20,.1);
-  --shadow:0 8px 32px rgba(0,0,0,.15);
+[data-theme="light"] {
+  --bg:  #f5f5f5;
+  --s1:  #ffffff;
+  --s2:  #f0f0f0;
+  --s3:  #e8e8e8;
+  --b1:  #e0e0e0;
+  --b2:  #d0d0d0;
+  --b3:  #b8b8b8;
+  --tx:  #0f0f0f;
+  --mu:  #b0b0b0;
+  --mu2: #707070;
+  --acd: rgba(100,160,0,.07);
+  --ac-ring: rgba(100,160,0,.3);
+  --redd:    rgba(220,50,50,.1);
+  --greend:  rgba(30,160,90,.1);
+  --oranged: rgba(200,100,20,.1);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.1);
+  --shadow:    0 4px 20px rgba(0,0,0,.12);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,.15);
 }
