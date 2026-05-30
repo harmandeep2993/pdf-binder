@@ -4,6 +4,10 @@
 .fcard:active{cursor:grabbing}
 .fcard.dragging{opacity:.15;transform:scale(.95)}
 .fcard.drag-over{border-color:var(--ac);background:var(--acd);box-shadow:0 0 0 1px var(--ac)}
+.fcard.drop-before{box-shadow:-4px 0 0 var(--ac);border-color:var(--b3)}
+.fcard.drop-after {box-shadow: 4px 0 0 var(--ac);border-color:var(--b3)}
+.fcard-end-zone{width:48px;border-radius:var(--rr);border:1.5px dashed var(--b2);background:transparent;transition:border-color .1s,background .1s;flex-shrink:0;align-self:stretch;min-height:80px}
+.fcard-end-zone.active{border-color:var(--ac);background:var(--acd)}
 .fcard-order{position:absolute;top:6px;left:6px;z-index:2;background:rgba(0,0,0,.72);color:var(--mu2);font-size:.54rem;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:5px;pointer-events:none}
 .fcard-thumb{width:100%;aspect-ratio:3/4;background:var(--s2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .fcard-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}

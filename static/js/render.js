@@ -60,24 +60,55 @@ export function renderGrid() {
     if (!file.loading) {
       card.addEventListener('dragstart', () => { S.setDragSrc(file.id); setTimeout(() => card.classList.add('dragging'), 0); });
       card.addEventListener('dragend',   () => { card.classList.remove('dragging'); clearCardDrag(); });
-      card.addEventListener('dragover',  e => { e.preventDefault(); clearCardDrag(); card.classList.add('drag-over'); });
+      card.addEventListener('dragover',  e => {
+        e.preventDefault(); clearCardDrag();
+        const after = e.clientX >= card.getBoundingClientRect().left + card.offsetWidth / 2;
+        card.classList.add(after ? 'drop-after' : 'drop-before');
+      });
       card.addEventListener('dragleave', () => clearCardDrag());
       card.addEventListener('drop', e => {
-        e.preventDefault(); clearCardDrag();
+        e.preventDefault();
+        const after = e.clientX >= card.getBoundingClientRect().left + card.offsetWidth / 2;
+        clearCardDrag();
         if (!S.dragSrc || S.dragSrc === file.id) return;
         snapshot();
-        const fi = S.files.findIndex(f => f.id === S.dragSrc), ti = S.files.findIndex(f => f.id === file.id);
+        const fi = S.files.findIndex(f => f.id === S.dragSrc);
+        const ti = S.files.findIndex(f => f.id === file.id);
         if (fi < 0 || ti < 0) return;
-        const [m] = S.files.splice(fi, 1); S.files.splice(ti, 0, m);
+        const [m] = S.files.splice(fi, 1);
+        let insertAt = (fi < ti ? ti - 1 : ti) + (after ? 1 : 0);
+        S.files.splice(Math.min(insertAt, S.files.length), 0, m);
         S.setDragSrc(null); renderGrid();
       });
     }
     grid.appendChild(card);
   });
+
+  // end-zone: drop target after all cards for "append to end"
+  if (S.files.some(f => !f.loading)) {
+    const ez = document.createElement('div');
+    ez.className = 'fcard-end-zone';
+    ez.addEventListener('dragover',  e => { e.preventDefault(); ez.classList.add('active'); });
+    ez.addEventListener('dragleave', ()  => ez.classList.remove('active'));
+    ez.addEventListener('drop', e => {
+      e.preventDefault(); ez.classList.remove('active');
+      if (!S.dragSrc) return;
+      snapshot();
+      const fi = S.files.findIndex(f => f.id === S.dragSrc);
+      if (fi < 0) return;
+      const [m] = S.files.splice(fi, 1);
+      S.files.push(m);
+      S.setDragSrc(null); renderGrid();
+    });
+    grid.appendChild(ez);
+  }
+
   renderPreview();
 }
 
-export function clearCardDrag() { document.querySelectorAll('.fcard').forEach(c => c.classList.remove('drag-over')); }
+export function clearCardDrag() {
+  document.querySelectorAll('.fcard').forEach(c => c.classList.remove('drag-over', 'drop-before', 'drop-after'));
+}
 
 export function renderPreview() {
   const pagesEl = document.getElementById('preview-pages');
