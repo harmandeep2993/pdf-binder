@@ -8,6 +8,8 @@ from ..cache import cache_get
 
 router = APIRouter()
 
+_MAX_PAGES = 10_000
+
 @router.post("/merge")
 async def merge_pdfs(
     background_tasks: BackgroundTasks,
@@ -19,10 +21,18 @@ async def merge_pdfs(
     compress: str = Form("false"),
 ):
     try:
-        pages_list   = json.loads(pages)
-        pw_map       = json.loads(passwords)
-        key_map      = json.loads(keys)
-        do_compress  = compress.lower() == "true"
+        pages_list = json.loads(pages)
+        pw_map     = json.loads(passwords)
+        key_map    = json.loads(keys)
+        if not isinstance(pages_list, list):
+            raise HTTPException(400, "pages must be a JSON array")
+        if not isinstance(pw_map, dict):
+            raise HTTPException(400, "passwords must be a JSON object")
+        if not isinstance(key_map, dict):
+            raise HTTPException(400, "keys must be a JSON object")
+        if len(pages_list) > _MAX_PAGES:
+            raise HTTPException(400, f"Too many pages requested (max {_MAX_PAGES})")
+        do_compress = compress.lower() == "true"
 
         buffers: dict[str, bytes] = {}
         for f in files:
@@ -45,6 +55,8 @@ async def merge_pdfs(
             rotation = entry.get("rotation", 0)
             if fname not in readers:
                 raise HTTPException(400, f"File not found: {fname}")
+            if not isinstance(pidx, int) or pidx < 0 or pidx >= len(readers[fname].pages):
+                raise HTTPException(400, f"Page index {pidx} out of range for {fname}")
             added = writer.add_page(readers[fname].pages[pidx])
             if rotation:
                 added.rotate(rotation)
@@ -63,5 +75,6 @@ async def merge_pdfs(
         return FileResponse(tmp.name, filename=filename, media_type="application/pdf")
     except HTTPException:
         raise
-    except Exception as e:
-        traceback.print_exc(); raise HTTPException(500, str(e))
+    except Exception:
+        traceback.print_exc()
+        raise HTTPException(500, "An error occurred while processing the PDF")

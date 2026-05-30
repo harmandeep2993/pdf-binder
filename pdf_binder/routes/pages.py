@@ -56,4 +56,4 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
         raise
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(500, str(e))
+        raise HTTPException(500, "An error occurred while processing the PDF")

@@ -25,8 +25,11 @@ _MAX_REQUEST_BYTES = 600 * 1024 * 1024  # 600 MB (multiple files in one merge)
 class _SizeLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         cl = request.headers.get("content-length")
-        if cl and int(cl) > _MAX_REQUEST_BYTES:
-            return Response("Request entity too large", status_code=413)
+        try:
+            if cl and int(cl) > _MAX_REQUEST_BYTES:
+                return Response("Request entity too large", status_code=413)
+        except ValueError:
+            pass  # malformed header — let the body parser handle it
         return await call_next(request)
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -36,7 +39,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type"],
 )
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 app.include_router(router)

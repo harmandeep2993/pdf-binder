@@ -76,18 +76,22 @@ export function renderGrid() {
         ${cardOrder ? `<span class="fcard-order">${cardOrder}</span>` : ''}
         ${!file.loading && !file.error ? `<span class="pg-badge${pgBadgeClass}">${allExcluded ? 'none' : `${included}/${file.total}`}</span>` : ''}
         ${!file.loading && !file.error ? `<div class="fcard-hover">
-          <button class="hover-open" onclick="window.openModal('${file.id}');event.stopPropagation()">Inspect</button>
-          <button class="hover-del"  onclick="window.removeFileAction('${file.id}');event.stopPropagation()">Remove</button>
+          <button class="hover-open" data-action="inspect" data-file-id="${file.id}">Inspect</button>
+          <button class="hover-del" data-action="remove" data-file-id="${file.id}">Remove</button>
         </div>` : ''}
-        ${file.error ? `<div class="fcard-hover"><button class="hover-del" onclick="window.removeFileAction('${file.id}');event.stopPropagation()">Remove</button></div>` : ''}
+        ${file.error ? `<div class="fcard-hover"><button class="hover-del" data-action="remove" data-file-id="${file.id}">Remove</button></div>` : ''}
         ${progressBar}
       </div>
       <div class="fcard-footer">
-        <div class="fcard-name" title="${file.filename}">${file.filename}</div>
+        <div class="fcard-name"></div>
         ${file.size ? `<div class="fcard-meta">${fmtSize(file.size)}${file.total ? ` · ${file.total} pg` : ''}</div>` : ''}
         ${file.loading && file.total === 0 ? `<div class="fcard-meta" style="color:var(--mu2)">Loading…</div>` : ''}
         ${file.error ? `<div class="fcard-meta" style="color:var(--red)">Error loading</div>` : ''}
       </div>`;
+
+    // Set filename via textContent to prevent XSS
+    card.querySelector('.fcard-name').textContent = file.filename;
+    card.querySelector('.fcard-name').title = file.filename;
 
     // hover thumbnail cycle
     if (!file.loading && !file.error && file.thumbs.length > 1) {

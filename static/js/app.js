@@ -165,6 +165,16 @@ document.getElementById('file-input').addEventListener('change', function () { l
 document.getElementById('merge-btn').addEventListener('click', mergeFiles);
 document.getElementById('modal-bg').addEventListener('click', e => { if (e.target === document.getElementById('modal-bg')) closeModal(); });
 
+// ── DYNAMIC BUTTON HANDLERS (event delegation for data-action buttons) ────────
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const fileId = btn.dataset.fileId;
+  if (action === 'inspect') { openModal(fileId); e.stopPropagation(); }
+  if (action === 'remove') { removeFileAction(fileId); e.stopPropagation(); }
+});
+
 // ── THEME ─────────────────────────────────────────────────────────────────────
 function initTheme() {
   const saved = getStorage('pf-theme', 'dark');

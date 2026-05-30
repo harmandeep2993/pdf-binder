@@ -21,8 +21,12 @@ async def split_pdf(
     key: str = Form(""),
 ):
     try:
-        indices   = json.loads(page_indices)
-        rot_map   = json.loads(rotations)   # keyed by position (str), not page index
+        indices = json.loads(page_indices)
+        rot_map = json.loads(rotations)     # keyed by position (str), not page index
+        if not isinstance(indices, list):
+            raise HTTPException(400, "page_indices must be a JSON array")
+        if not isinstance(rot_map, dict):
+            raise HTTPException(400, "rotations must be a JSON object")
         to_images = as_images.lower() == "true"
         cached    = cache_get(key)
         content   = cached if cached is not None else await file.read()
@@ -77,5 +81,6 @@ async def split_pdf(
         return FileResponse(tmp.name, filename=f"{stem}{suffix}.zip", media_type="application/zip")
     except HTTPException:
         raise
-    except Exception as e:
-        traceback.print_exc(); raise HTTPException(500, str(e))
+    except Exception:
+        traceback.print_exc()
+        raise HTTPException(500, "An error occurred while processing the PDF")
