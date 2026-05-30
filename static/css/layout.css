@@ -44,7 +44,7 @@ header h1{font-family:'DM Mono',monospace;font-size:.83rem;font-weight:500;color
 .empty kbd{display:inline-block;background:var(--s2);border:1px solid var(--b3);border-radius:4px;padding:0 5px;font-size:.62rem;color:var(--mu2);font-family:'DM Mono',monospace}
 
 /* file grid */
-#file-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}
+#file-grid{display:flex;flex-wrap:wrap;gap:15px;align-items:flex-start}
 
 /* drop overlay */
 #drop-overlay{display:none;position:fixed;inset:0;background:rgba(212,247,60,.03);border:2px dashed var(--ac);z-index:50;pointer-events:none;align-items:center;justify-content:center}
