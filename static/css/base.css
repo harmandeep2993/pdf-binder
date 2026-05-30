@@ -1,0 +1,9 @@
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+input[type=file]{display:none}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b3);border-radius:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes dupflash{0%{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}100%{border-color:var(--b2);box-shadow:none}}
