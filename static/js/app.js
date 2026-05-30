@@ -159,13 +159,6 @@ function updateThemeIcon(theme) {
 }
 document.getElementById('theme-btn')?.addEventListener('click', toggleTheme);
 
-// ── WORKSPACE NAME ──
-const wsInput = document.getElementById('workspace-name');
-if (wsInput) {
-  wsInput.value = localStorage.getItem('pf-workspace') || '';
-  wsInput.addEventListener('input', () => localStorage.setItem('pf-workspace', wsInput.value));
-}
-
 // ── INIT ──
 initTheme();
 
