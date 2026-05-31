@@ -31,9 +31,28 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
         size   = len(content)
         pw     = password
 
+        # Extract PDF document metadata
+        pdf_info = {}
+        try:
+            m = reader.metadata
+            if m:
+                pdf_info["doc_title"]   = m.title   or ""
+                pdf_info["doc_author"]  = m.author  or ""
+                pdf_info["doc_creator"] = m.creator or ""
+            pdf_info["has_bookmarks"] = bool(reader.outline)
+        except Exception:
+            pass
+
         async def generate():
             # 1. Send metadata immediately so the card appears right away
-            meta = {"type": "meta", "filename": fname, "total": total, "size": size, "key": key}
+            meta = {
+                "type": "meta",
+                "filename": fname,
+                "total": total,
+                "size": size,
+                "key": key,
+                **pdf_info,
+            }
             yield f"data: {json.dumps(meta)}\n\n"
 
             # 2. Render thumbnails in a thread, stream each one as it finishes

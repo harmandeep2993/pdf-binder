@@ -19,6 +19,7 @@ async def split_pdf(
     image_format: str = Form("jpeg"),
     password: str = Form(""),
     key: str = Form(""),
+    split_every: str = Form("0"),
 ):
     try:
         indices = json.loads(page_indices)
@@ -36,6 +37,32 @@ async def split_pdf(
         reader = open_reader(content, password)
         total  = len(reader.pages)
         stem   = Path(file.filename).stem
+
+        # split_every: split ALL pages into groups of n, ignoring indices
+        split_n = int(split_every)
+        if split_n > 0:
+            groups = [
+                range(start, min(start + split_n, total))
+                for start in range(0, total, split_n)
+            ]
+            zip_buf = io.BytesIO()
+            with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+                for gi, group in enumerate(groups):
+                    w = PdfWriter()
+                    for pos, idx in enumerate(group):
+                        w.add_page(reader.pages[idx])
+                        rotation = rot_map.get(str(idx), 0)
+                        if rotation:
+                            w.pages[pos].rotate(rotation)
+                    buf = io.BytesIO()
+                    w.write(buf)
+                    zf.writestr(f"{stem}_part{gi+1:03d}.pdf", buf.getvalue())
+
+            zip_buf.seek(0)
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+            tmp.write(zip_buf.read()); tmp.close()
+            background_tasks.add_task(os.unlink, tmp.name)
+            return FileResponse(tmp.name, filename=f"{stem}_split.zip", media_type="application/zip")
 
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -64,10 +91,9 @@ async def split_pdf(
                     if idx < 0 or idx >= total: continue
                     rotation = rot_map.get(str(pos), 0)
                     w  = PdfWriter()
-                    pg = reader.pages[idx]
+                    w.add_page(reader.pages[idx])
                     if rotation:
-                        pg.rotate(rotation)
-                    w.add_page(pg)
+                        w.pages[0].rotate(rotation)
                     buf = io.BytesIO()
                     w.write(buf)
                     zf.writestr(f"{stem}_{pos+1:03d}.pdf", buf.getvalue())

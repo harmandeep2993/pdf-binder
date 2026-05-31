@@ -44,4 +44,4 @@ def _render_page(doc: pdfium.PdfDocument, i: int) -> str:
     buf    = io.BytesIO()
     bitmap.to_pil().convert("RGB").save(buf, format="JPEG", quality=70)
     page.close()
-    return base64.b64encode(buf.getvalue()).decode()
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()

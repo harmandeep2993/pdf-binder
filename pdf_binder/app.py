@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,7 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from .routes import router
+from .history import init_db
 
 ROOT     = Path(__file__).parent.parent
 FRONTEND = ROOT / "index.html"
@@ -33,12 +35,17 @@ class _SizeLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 # ── App ───────────────────────────────────────────────────────────────────────
-app = FastAPI(title="PDF Binder")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(title="PDF Binder", lifespan=lifespan)
 app.add_middleware(_SizeLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ORIGINS,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type"],
 )
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

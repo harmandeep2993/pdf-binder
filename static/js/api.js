@@ -91,11 +91,14 @@ export async function loadOneFile(id, file, password) {
         if (!f) break;
 
         if (event.type === 'meta') {
-          f.total  = event.total;
-          f.size   = event.size || 0;
-          f.key    = event.key  || '';
-          f.thumbs = [];
-          f.progress = 0;
+          f.total        = event.total;
+          f.size         = event.size || 0;
+          f.key          = event.key  || '';
+          f.thumbs       = [];
+          f.progress     = 0;
+          f.docTitle     = event.doc_title  || '';
+          f.docAuthor    = event.doc_author || '';
+          f.hasBookmarks = !!event.has_bookmarks;
           f.pages  = Array.from({ length: event.total }, (_, i) => ({ include: true, rotation: 0, origIdx: i }));
           S.filesChanged();
         } else if (event.type === 'thumb') {
@@ -120,32 +123,74 @@ export async function loadOneFile(id, file, password) {
 }
 
 // ── MERGE ─────────────────────────────────────────────────────────────────────
+const _MERGE_BTN_HTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>Merge &amp; Download`;
+const _MERGE_BTN_LOADING = `<span class="btn-spinner"></span>Merging…`;
+
 export async function mergeFiles() {
-  const btn      = document.getElementById('merge-btn');
-  const fname    = document.getElementById('out-filename').value.trim() || 'merged.pdf';
-  const compress = document.getElementById('compress-toggle')?.checked ? 'true' : 'false';
-  btn.disabled = true; setStatus('Merging…', 'loading');
+  const btn            = document.getElementById('merge-btn');
+  const fname          = document.getElementById('out-filename').value.trim() || 'merged.pdf';
+  const compress       = document.getElementById('compress-toggle')?.checked    ? 'true' : 'false';
+  const pageNumbers    = document.getElementById('pagenums-toggle')?.checked    ? 'true' : 'false';
+  const normalize      = document.getElementById('normalize-toggle')?.checked   ? 'true' : 'false';
+  const grayscale      = document.getElementById('grayscale-toggle')?.checked   ? 'true' : 'false';
+  const bookmarks      = document.getElementById('bookmarks-toggle')?.checked   ? 'true' : 'false';
+  const flatten        = document.getElementById('flatten-toggle')?.checked      ? 'true' : 'false';
+  const outputPassword = document.getElementById('output-password')?.value.trim() || '';
+
+  btn.disabled = true; btn.innerHTML = _MERGE_BTN_LOADING;
+  setStatus('Merging…', 'loading');
   const fd = new FormData(), pagesList = [];
   S.files.forEach(f => {
-    fd.append('files', f.fileObj);
-    f.pages.forEach(p => { if (p.include) pagesList.push({ file: f.filename, page: p.origIdx, rotation: p.rotation || 0 }); });
+    if (f.type !== 'blank') fd.append('files', f.fileObj);
+    f.pages.forEach(p => {
+      if (!p.include) return;
+      if (p.type === 'blank') pagesList.push({ type: 'blank', width: p.width || 595, height: p.height || 842 });
+      else {
+        const entry = { file: f.filename, page: p.origIdx, rotation: p.rotation || 0 };
+        if (p.crop) entry.crop = p.crop;
+        pagesList.push(entry);
+      }
+    });
   });
-  fd.append('pages', JSON.stringify(pagesList));
-  fd.append('filename', fname);
-  fd.append('compress', compress);
-  fd.append('passwords', JSON.stringify(Object.fromEntries(S.files.map(f => [f.filename, S.filePasswords[f.id] || '']))));
-  fd.append('keys',      JSON.stringify(Object.fromEntries(S.files.map(f => [f.filename, f.key || '']))));
+  fd.append('pages',            JSON.stringify(pagesList));
+  fd.append('filename',         fname);
+  fd.append('compress',         compress);
+  fd.append('page_numbers',     pageNumbers);
+  fd.append('normalize',        normalize);
+  fd.append('grayscale',        grayscale);
+  fd.append('bookmarks',        bookmarks);
+  fd.append('flatten_forms',    flatten);
+  fd.append('output_password',  outputPassword);
+  fd.append('metadata',         JSON.stringify(S.mergeMetadata));
+  fd.append('passwords',        JSON.stringify(Object.fromEntries(S.files.filter(f => f.type !== 'blank').map(f => [f.filename, S.filePasswords[f.id] || '']))));
+  fd.append('keys',             JSON.stringify(Object.fromEntries(S.files.filter(f => f.type !== 'blank').map(f => [f.filename, f.key || '']))));
   try {
     const r = await fetch('/merge', { method: 'POST', body: fd });
     if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
     triggerDownload(await r.blob(), fname.endsWith('.pdf') ? fname : fname + '.pdf');
     setStatus(`Done! ${pagesList.length} pages merged.`, 'ok');
   } catch (e) { setStatus('Error: ' + e.message, 'err'); }
+  btn.innerHTML = _MERGE_BTN_HTML;
   btn.disabled = false;
 }
 
 // ── EXTRACT / SPLIT ───────────────────────────────────────────────────────────
+export async function decryptFile(f) {
+  const fd = new FormData();
+  fd.append('file', f.fileObj);
+  fd.append('password', S.filePasswords[f.id] || '');
+  fd.append('key', f.key || '');
+  try {
+    const r = await fetch('/decrypt', { method: 'POST', body: fd });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
+    triggerDownload(await r.blob(), f.filename.replace('.pdf', '_decrypted.pdf'));
+  } catch (e) { setStatus('Decrypt failed: ' + e.message, 'err'); }
+}
+
 export async function extractSelected(f, fmt, selIndices) {
+  const btn = document.getElementById('modal-extract-btn');
+  const origHTML = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>'; }
   setModalStatus('Extracting…', 'loading');
   const origIndices = selIndices.map(i => f.pages[i].origIdx);
   const rotMap = {};
@@ -161,12 +206,34 @@ export async function extractSelected(f, fmt, selIndices) {
     triggerDownload(await r.blob(), f.filename.replace('.pdf', '') + (fmt === 'pdf' ? '_extract.zip' : '_images.zip'));
     setModalStatus(`${selIndices.length} page(s) extracted as ${fmt.toUpperCase()}.`, 'ok');
   } catch (e) { setModalStatus('Error: ' + e.message, 'err'); }
+  finally { if (btn && origHTML) { btn.innerHTML = origHTML; btn.disabled = false; } }
+}
+
+export async function splitEvery(f, n, fmt) {
+  setModalStatus(`Splitting into ${n}-page chunks…`, 'loading');
+  const origIndices = f.pages.map(p => p.origIdx);
+  const rotMap = {};
+  f.pages.forEach((p, pos) => { if (p.rotation) rotMap[pos] = p.rotation; });
+  const fd = new FormData();
+  fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(origIndices));
+  fd.append('rotations', JSON.stringify(rotMap)); fd.append('as_images', 'false');
+  fd.append('image_format', 'jpeg'); fd.append('password', S.filePasswords[f.id] || '');
+  fd.append('key', f.key || ''); fd.append('split_every', String(n));
+  const btn2 = document.querySelector('#split-every-n + * + button, .mfoot-row button.mfbtn.ghost');
+  try {
+    const r = await fetch('/split', { method: 'POST', body: fd });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
+    triggerDownload(await r.blob(), f.filename.replace('.pdf', '') + `_every${n}.zip`);
+    setModalStatus(`Split into ${Math.ceil(f.pages.length / n)} parts.`, 'ok');
+  } catch (e) { setModalStatus('Error: ' + e.message, 'err'); }
 }
 
 export async function splitAllPages(f, fmt) {
   const origIndices = f.pages.map(p => p.origIdx);
   const rotMap = {};
   f.pages.forEach((p, pos) => { if (p.rotation) rotMap[pos] = p.rotation; });
+  const btn = document.querySelector('.mfbtn.ghost:not(#modal-newcard-btn)');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>'; }
   setModalStatus('Splitting…', 'loading');
   const fd = new FormData();
   fd.append('file', f.fileObj); fd.append('page_indices', JSON.stringify(origIndices));

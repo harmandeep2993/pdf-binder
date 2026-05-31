@@ -224,7 +224,7 @@ header {
 
 /* ── PREVIEW PANEL ───────────────────────────────────────────────────────── */
 #preview-panel {
-  width: 268px;
+  width: 300px;
   border-left: 1px solid var(--b1);
   display: flex;
   flex-direction: column;

@@ -12,3 +12,10 @@ wheels/
 # Claude
 .claude
 claude.md
+
+# Logs & Runtime
+server.log
+history.db
+
+# Generated files
+output/
