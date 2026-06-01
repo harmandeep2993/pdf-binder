@@ -6,8 +6,17 @@ dist/
 wheels/
 *.egg-info
 
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Virtual environments
 .venv
+
+# Environment / secrets
+.env
+.env.*
 
 # Claude
 .claude
@@ -15,7 +24,18 @@ claude.md
 
 # Logs & Runtime
 server.log
+*.log
 history.db
 
 # Generated files
 output/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
