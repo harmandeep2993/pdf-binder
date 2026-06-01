@@ -308,7 +308,7 @@
     <div class="sgroup">
       <div class="sgroup-label">Presets</div>
       <div class="preset-row">
-        <select id="preset-select" class="fmt-select" style="flex:1;min-width:0"></select>
+        <select id="preset-select" class="fmt-select" style="flex:1;min-width:0" onchange="applyPreset()"></select>
         <button class="mtbtn" onclick="applyPreset()">Apply</button>
         <button class="mtbtn" onclick="savePreset()">Save</button>
         <button class="mtbtn" onclick="deletePreset()" style="color:var(--red)">Del</button>
