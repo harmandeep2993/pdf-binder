@@ -39,12 +39,21 @@ class _SizeLimitMiddleware(BaseHTTPMiddleware):
 # the `X-Auth-Token` header or a `token` query param.
 _AUTH_TOKEN = os.getenv("PDF_BINDER_TOKEN", "").strip()
 
+# The frontend shell must load unauthenticated so it can render the unlock
+# overlay; only the API endpoints below the shell are gated. (/auth-check is
+# NOT exempt — the frontend relies on its 401 to know a token is needed.)
+def _is_public_path(path: str) -> bool:
+    return path == "/" or path.startswith("/static/") or path == "/favicon.ico"
+
 class _AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if _AUTH_TOKEN:
+        if _AUTH_TOKEN and not _is_public_path(request.url.path):
             supplied = request.headers.get("x-auth-token") or request.query_params.get("token", "")
             if not secrets.compare_digest(supplied, _AUTH_TOKEN):
-                return Response("Unauthorized", status_code=401)
+                # Distinct header lets the frontend tell an app-token failure
+                # apart from a PDF-password 401 and show the unlock overlay.
+                return Response("Unauthorized", status_code=401,
+                                headers={"X-Auth-Token-Required": "1"})
         return await call_next(request)
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -70,3 +79,9 @@ app.include_router(router)
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     return FRONTEND.read_text(encoding="utf-8")
+
+@app.get("/auth-check")
+def auth_check():
+    # Reaching here means the auth middleware let the request through, so the
+    # token is valid (or no token is configured). The frontend probes this.
+    return {"ok": True, "auth_required": bool(_AUTH_TOKEN)}

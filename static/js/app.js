@@ -1,3 +1,4 @@
+import './auth.js';   // must load first: patches fetch + shows the unlock overlay
 import * as S from './state.js';
 import { loadFiles, mergeFiles, extractSelected, splitAllPages, splitEvery,
          decryptFile, setStatus, setModalStatus, fmtSize, setPromptPassword, abortLoad } from './api.js';

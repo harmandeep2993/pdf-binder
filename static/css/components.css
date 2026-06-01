@@ -1011,3 +1011,91 @@
   display: inline-block;
   margin: 1px 1px;
 }
+
+/* ── Auth unlock overlay ─────────────────────────────────────────────────────── */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.auth-overlay.show { display: flex; }
+
+.auth-card {
+  width: min(360px, calc(100vw - 48px));
+  padding: 32px 28px 26px;
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--rr);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: authPop .18s ease;
+}
+@keyframes authPop {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.auth-lock {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pill);
+  background: var(--acd);
+  color: var(--ac);
+}
+.auth-title {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--tx);
+}
+.auth-sub {
+  margin: 0 0 18px;
+  font-size: .8rem;
+  line-height: 1.5;
+  color: var(--mu2);
+}
+.auth-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: .9rem;
+  color: var(--tx);
+  background: var(--bg);
+  border: 1px solid var(--b2);
+  border-radius: var(--r);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.auth-input:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--ac-ring);
+}
+.auth-submit {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ac-fg);
+  background: var(--ac);
+  border: none;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: opacity .15s, filter .15s;
+}
+.auth-submit:hover:not(:disabled) { filter: brightness(1.05); }
+.auth-submit:disabled { opacity: .6; cursor: default; }
+.auth-error {
+  min-height: 18px;
+  margin-top: 12px;
+  font-size: .78rem;
+  color: var(--red);
+}
