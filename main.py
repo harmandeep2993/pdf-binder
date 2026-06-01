@@ -4,7 +4,7 @@ from pdf_binder import app  # noqa: F401  (uvicorn imports this module)
 if __name__ == "__main__":
     import uvicorn
     p = argparse.ArgumentParser()
-    # Bind to loopback by default — this is a local, single-user tool with no
+    # Bind to loopback by default - this is a local, single-user tool with no
     # authentication. Pass --host 0.0.0.0 only if you knowingly want LAN access.
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8000)

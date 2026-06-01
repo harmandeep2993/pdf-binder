@@ -7,7 +7,7 @@ export { fmtSize, setStatus, setModalStatus };
 let _promptPassword = async () => null;
 export function setPromptPassword(fn) { _promptPassword = fn; }
 
-// ── SSE PARSER ────────────────────────────────────────────────────────────────
+// SSE PARSER
 async function* parseSSE(response) {
   const reader  = response.body.getReader();
   const decoder = new TextDecoder();
@@ -27,7 +27,7 @@ async function* parseSSE(response) {
   }
 }
 
-// ── THROTTLED RENDER ──────────────────────────────────────────────────────────
+// THROTTLED RENDER
 let _renderPending = false;
 function scheduleRender() {
   if (_renderPending) return;
@@ -35,21 +35,21 @@ function scheduleRender() {
   setTimeout(() => { _renderPending = false; S.filesChanged(); }, 80); // max ~12fps during load
 }
 
-// ── SIZE WARNING ──────────────────────────────────────────────────────────────
+// SIZE WARNING
 export function checkSizeWarn() {
   const mb = S.files.reduce((s, f) => s + (f.size || 0), 0) / 1048576;
   const el = document.getElementById('size-warn');
-  if (mb > 40) { el.textContent = `⚠ Total ~${mb.toFixed(0)} MB — merging may be slow.`; el.classList.add('show'); }
+  if (mb > 40) { el.textContent = `⚠ Total ~${mb.toFixed(0)} MB - merging may be slow.`; el.classList.add('show'); }
   else el.classList.remove('show');
 }
 S.on('files:change', checkSizeWarn);
 
-// ── ABORT HELPER ──────────────────────────────────────────────────────────────
+// ABORT HELPER
 export function abortLoad(id) {
   if (S.controllers[id]) { S.controllers[id].abort(); delete S.controllers[id]; }
 }
 
-// ── LOAD FILES ────────────────────────────────────────────────────────────────
+// LOAD FILES
 export async function loadFiles(newFiles) {
   for (const file of newFiles) {
     const id = 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2);
@@ -114,7 +114,7 @@ export async function loadOneFile(id, file, password) {
 
     } catch (e) {
       delete S.controllers[id];
-      if (e.name === 'AbortError') return; // file was removed — expected
+      if (e.name === 'AbortError') return; // file was removed - expected
       const f = S.files.find(x => x.id === id);
       if (f) { f.loading = false; f.error = e.message; S.filesChanged(); }
     }
@@ -122,7 +122,7 @@ export async function loadOneFile(id, file, password) {
   await tryLoad(password, false);
 }
 
-// ── MERGE ─────────────────────────────────────────────────────────────────────
+// MERGE
 const _MERGE_BTN_HTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>Merge &amp; Download`;
 const _MERGE_BTN_LOADING = `<span class="btn-spinner"></span>Merging…`;
 
@@ -174,7 +174,7 @@ export async function mergeFiles() {
   btn.disabled = false;
 }
 
-// ── EXTRACT / SPLIT ───────────────────────────────────────────────────────────
+// EXTRACT / SPLIT
 export async function decryptFile(f) {
   const fd = new FormData();
   fd.append('file', f.fileObj);

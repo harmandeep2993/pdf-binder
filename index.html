@@ -17,7 +17,7 @@
 </div>
 <div id="size-warn"></div>
 
-<!-- ── HEADER ── -->
+<!-- HEADER -->
 <header>
   <div class="logo">
     <div class="logo-mark">
@@ -38,7 +38,7 @@
   </div>
 </header>
 
-<!-- ── TOOLBAR ── -->
+<!-- TOOLBAR -->
 <div class="toolbar">
   <div class="tab-group">
     <button class="tab-btn active" id="tab-merge" onclick="switchTab('merge')">Merge</button>
@@ -55,7 +55,7 @@
     <input type="file" id="file-input" multiple accept=".pdf">
     <button class="btn btn-ghost" onclick="addBlankPage()">+ Blank</button>
     <div class="t-sep"></div>
-    <button class="btn btn-ghost sort-btn" onclick="sortCards('name')" title="Sort by name">A–Z</button>
+    <button class="btn btn-ghost sort-btn" onclick="sortCards('name')" title="Sort by name">A-Z</button>
     <button class="btn btn-ghost sort-btn" onclick="sortCards('pages')" title="Sort by pages">Pg</button>
     <button class="btn btn-ghost sort-btn" onclick="sortCards('size')" title="Sort by size">Sz</button>
     <div class="t-sep"></div>
@@ -63,7 +63,7 @@
   </div>
 </div>
 
-<!-- ── MAIN LAYOUT ── -->
+<!-- MAIN LAYOUT -->
 <div id="main-layout" style="flex:1;display:flex;overflow:hidden;min-height:0">
 
   <!-- FILE CANVAS -->
@@ -174,7 +174,7 @@
       </div>
     </div>
     <input class="dinput" type="password" id="pw-input" placeholder="Enter PDF password" autocomplete="current-password">
-    <div class="derr" id="pw-err">Incorrect password — try again</div>
+    <div class="derr" id="pw-err">Incorrect password - try again</div>
     <div class="dbtns">
       <button class="dbtn-cancel" onclick="pwCancel()">Cancel</button>
       <button class="dbtn-ok" onclick="pwSubmit()">Unlock</button>
@@ -259,7 +259,7 @@
 <div class="overlay" id="crop-overlay" onclick="if(event.target===this)closeCrop()">
   <div class="dialog" style="width:280px">
     <div class="dialog-header">
-      <div><h2>Crop pages</h2><p style="font-size:.72rem;color:var(--mu2);margin-top:2px">Margins from edge (mm) — applied to selected pages</p></div>
+      <div><h2>Crop pages</h2><p style="font-size:.72rem;color:var(--mu2);margin-top:2px">Margins from edge (mm) - applied to selected pages</p></div>
     </div>
     <div class="crop-grid">
       <div></div>

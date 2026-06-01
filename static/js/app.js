@@ -7,17 +7,17 @@ import { setStorage, getStorage, trapFocus } from './helpers.js';
 import { setMergeMetadata } from './state.js';
 import { loadHistory } from './history.js';
 
-// ── ERROR BOUNDARY ────────────────────────────────────────────────────────────
+// ERROR BOUNDARY
 window.addEventListener('error', e => {
   console.error('[PDF Binder] Uncaught error:', e.error);
-  setStatus('Unexpected error — see console', 'err');
+  setStatus('Unexpected error - see console', 'err');
 });
 window.addEventListener('unhandledrejection', e => {
   console.error('[PDF Binder] Unhandled rejection:', e.reason);
-  setStatus('Unexpected error — see console', 'err');
+  setStatus('Unexpected error - see console', 'err');
 });
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
+// TOAST
 function showUndoToast(msg) {
   document.getElementById('undo-msg').textContent = msg;
   document.getElementById('undo-toast').classList.add('show');
@@ -25,7 +25,7 @@ function showUndoToast(msg) {
 }
 setShowToast(showUndoToast);
 
-// ── PASSWORD MODAL ────────────────────────────────────────────────────────────
+// PASSWORD MODAL
 let _releasePwFocus = null;
 export function promptPassword(filename, showError) {
   return new Promise(resolve => {
@@ -53,14 +53,14 @@ document.getElementById('pw-input').addEventListener('keydown', e => {
   if (e.key === 'Escape') pwCancel();
 });
 
-// ── UNDO ──────────────────────────────────────────────────────────────────────
+// UNDO
 function doUndo() {
   if (!S.undoStack.length) return;
   S.setFiles(S.undoStack.pop());
   document.getElementById('undo-toast').classList.remove('show');
 }
 
-// ── FILE ACTIONS ──────────────────────────────────────────────────────────────
+// FILE ACTIONS
 function removeFileAction(id) {
   snapshot(); abortLoad(id); S.setFiles(S.files.filter(f => f.id !== id));
   S.emit('ui:toast', { msg: 'File removed' });
@@ -72,7 +72,7 @@ function clearAll() {
   S.emit('ui:toast', { msg: 'Cleared' });
 }
 
-// ── SORT CARDS ────────────────────────────────────────────────────────────────
+// SORT CARDS
 function sortCards(by) {
   if (!S.files.length) return; snapshot();
   S.files.sort((a, b) => {
@@ -84,7 +84,7 @@ function sortCards(by) {
   S.filesChanged();
 }
 
-// ── DUPLICATE CARD ────────────────────────────────────────────────────────────
+// DUPLICATE CARD
 function duplicateCard(id) {
   snapshot();
   const file = S.files.find(f => f.id === id); if (!file) return;
@@ -94,13 +94,13 @@ function duplicateCard(id) {
   S.filesChanged(); S.emit('ui:toast', { msg: 'Card duplicated' });
 }
 
-// ── DECRYPT ───────────────────────────────────────────────────────────────────
+// DECRYPT
 function decryptCard(id) {
   const f = S.files.find(x => x.id === id); if (!f) return;
   decryptFile(f);
 }
 
-// ── BLANK PAGE ────────────────────────────────────────────────────────────────
+// BLANK PAGE
 function addBlankPage() {
   snapshot();
   S.files.push({
@@ -111,7 +111,7 @@ function addBlankPage() {
   S.filesChanged(); S.emit('ui:toast', { msg: 'Blank page added' });
 }
 
-// ── ZOOM ──────────────────────────────────────────────────────────────────────
+// ZOOM
 function zoomPage(fileId, pagePos) {
   const f = S.files.find(x => x.id === fileId); if (!f) return;
   const origIdx = f.pages[pagePos]?.origIdx ?? pagePos;
@@ -125,7 +125,7 @@ function zoomPage(fileId, pagePos) {
 }
 function closeZoom() { document.getElementById('zoom-overlay').classList.remove('show'); }
 
-// ── CROP ──────────────────────────────────────────────────────────────────────
+// CROP
 function openCrop() {
   if (!S.modalSel.size) { S.emit('ui:toast', { msg: 'Select pages to crop' }); return; }
   ['crop-l','crop-r','crop-t','crop-b'].forEach(id => { document.getElementById(id).value = '0'; });
@@ -146,7 +146,7 @@ function applyCrop() {
   S.emit('ui:toast', { msg: `Crop applied to ${S.modalSel.size} page(s)` });
 }
 
-// ── MODAL ─────────────────────────────────────────────────────────────────────
+// MODAL
 function openModal(id) {
   const file = S.files.find(f => f.id === id); if (!file) return;
   S.setModalFileId(id);
@@ -264,7 +264,7 @@ function doSplitEvery() {
   splitEvery(f, n);
 }
 
-// ── SETTINGS MODAL ────────────────────────────────────────────────────────────
+// SETTINGS MODAL
 function openSettings() { _refreshPresetSelect(); document.getElementById('settings-overlay').classList.add('show'); }
 function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
 
@@ -286,7 +286,7 @@ function _getPresets() { try { return JSON.parse(getStorage('pf-presets', '{}'))
 function _refreshPresetSelect() {
   const sel = document.getElementById('preset-select'); if (!sel) return;
   const presets = _getPresets();
-  sel.innerHTML = '<option value="">— select preset —</option>';
+  sel.innerHTML = '<option value="">- select preset -</option>';
   Object.keys(presets).forEach(name => {
     const o = document.createElement('option'); o.value = name; o.textContent = name; sel.appendChild(o);
   });
@@ -307,7 +307,7 @@ function deletePreset() {
   _refreshPresetSelect(); S.emit('ui:toast', { msg: 'Preset deleted' });
 }
 
-// ── METADATA MODAL ────────────────────────────────────────────────────────────
+// METADATA MODAL
 let _releaseMetaFocus = null;
 function openMetaModal() {
   document.getElementById('meta-title').value = S.mergeMetadata.title || '';
@@ -333,11 +333,11 @@ function metaSubmit() {
   if (hasAny) S.emit('ui:toast', { msg: 'Metadata saved' });
 }
 
-// ── HELP MODAL ────────────────────────────────────────────────────────────────
+// HELP MODAL
 function openHelp() { document.getElementById('help-overlay').classList.add('show'); }
 function closeHelp() { document.getElementById('help-overlay').classList.remove('show'); }
 
-// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+// KEYBOARD
 document.addEventListener('keydown', e => {
   if (document.getElementById('pw-overlay').classList.contains('show')) return;
   if (e.key === 'Escape') {
@@ -356,7 +356,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── DRAG DROP (file upload) ───────────────────────────────────────────────────
+// DRAG DROP (file upload)
 document.addEventListener('dragover', e => {
   if (S.isDragging) return;
   e.preventDefault();
@@ -380,7 +380,7 @@ document.addEventListener('drop', e => {
 document.getElementById('file-input').addEventListener('change', function () { loadFiles([...this.files]); this.value = ''; });
 document.getElementById('merge-btn').addEventListener('click', mergeFiles);
 
-// ── TAB SWITCHER ──────────────────────────────────────────────────────────────
+// TAB SWITCHER
 function switchTab(tab) {
   const isMerge = tab === 'merge';
   document.getElementById('main-layout').style.display = isMerge ? 'flex' : 'none';
@@ -391,7 +391,7 @@ function switchTab(tab) {
   if (!isMerge) loadHistory();
 }
 
-// ── THEME ─────────────────────────────────────────────────────────────────────
+// THEME
 function initTheme() {
   const saved = getStorage('pf-theme', 'dark');
   document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : '');
@@ -412,11 +412,11 @@ function updateThemeIcon(theme) {
 }
 document.getElementById('theme-btn')?.addEventListener('click', toggleTheme);
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// INIT
 initTheme();
 setPromptPassword(promptPassword);
 
-// ── EXPOSE GLOBALS ────────────────────────────────────────────────────────────
+// EXPOSE GLOBALS
 Object.assign(window, {
   removeFileAction, clearAll, sortCards, duplicateCard, decryptCard, addBlankPage, doUndo,
   pwSubmit, pwCancel,

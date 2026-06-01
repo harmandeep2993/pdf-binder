@@ -8,7 +8,7 @@ function getToken()  { try { return localStorage.getItem(TOKEN_KEY) || ''; } cat
 function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch {} }
 function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch {} }
 
-// ── Patch fetch: inject X-Auth-Token on same-origin requests ───────────────────
+// Patch fetch: inject X-Auth-Token on same-origin requests
 window.fetch = (input, init = {}) => {
   const token = getToken();
   if (token && typeof input === 'string' && input.startsWith('/')) {
@@ -19,7 +19,7 @@ window.fetch = (input, init = {}) => {
   return _origFetch(input, init);
 };
 
-// ── Overlay ────────────────────────────────────────────────────────────────────
+// Overlay
 let _overlayEl = null, _resolveSubmit = null;
 
 function buildOverlay() {
@@ -61,7 +61,7 @@ function showOverlay(wasWrong) {
   const err    = _overlayEl.querySelector('#auth-error');
   const submit = _overlayEl.querySelector('#auth-submit');
   const input  = _overlayEl.querySelector('#auth-input');
-  err.textContent  = wasWrong ? '✗ Wrong token — try again' : '';
+  err.textContent  = wasWrong ? '✗ Wrong token - try again' : '';
   submit.disabled  = false; submit.textContent = 'Unlock';
   input.value      = '';
   _overlayEl.classList.add('show');
@@ -71,7 +71,7 @@ function showOverlay(wasWrong) {
 
 function hideOverlay() { _overlayEl && _overlayEl.classList.remove('show'); }
 
-// ── Gate ────────────────────────────────────────────────────────────────────────
+// Gate
 // Probe /auth-check; loop showing the overlay until the token is accepted.
 export async function ensureAuth() {
   let hadToken = getToken() !== '';
@@ -81,7 +81,7 @@ export async function ensureAuth() {
       const token = getToken();
       res = await _origFetch('/auth-check', token ? { headers: { 'X-Auth-Token': token } } : {});
     } catch {
-      return; // network/server down — let the rest of the app surface it
+      return; // network/server down - let the rest of the app surface it
     }
     if (!(res.status === 401 && res.headers.get('X-Auth-Token-Required'))) {
       hideOverlay();
@@ -94,5 +94,5 @@ export async function ensureAuth() {
   }
 }
 
-// Self-bootstrap as soon as the module loads (deferred module → DOM is ready).
+// Self-bootstrap as soon as the module loads (deferred module, so DOM is ready).
 ensureAuth();

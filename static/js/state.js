@@ -1,4 +1,4 @@
-// ── PUB/SUB ──────────────────────────────────────────────────────────────────
+// PUB/SUB
 const _subs = {};
 
 export function on(event, fn) {
@@ -10,7 +10,7 @@ export function emit(event, data) {
   (_subs[event] || []).forEach(fn => fn(data));
 }
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
+// STATE
 export let files        = [];
 export let dragSrc      = null;
 export let isDragging   = false;
@@ -28,7 +28,7 @@ export let pwResolve    = null;
 export let lastCardId   = null;
 export let mergeMetadata = { title: '', author: '', subject: '' };
 
-// ── SETTERS ───────────────────────────────────────────────────────────────────
+// SETTERS
 export function setFiles(v)           { files = v;           emit('files:change'); }
 export function filesChanged()        {                       emit('files:change'); }
 export function setDragSrc(v)         { dragSrc = v; }

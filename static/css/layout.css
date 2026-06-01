@@ -1,4 +1,4 @@
-/* ── HEADER ──────────────────────────────────────────────────────────────── */
+/* HEADER */
 header {
   height: 52px;
   padding: 0 20px;
@@ -57,7 +57,7 @@ header {
 }
 .icon-btn:hover { color:var(--tx); border-color:var(--b3); background:var(--s3) }
 
-/* ── TOOLBAR ─────────────────────────────────────────────────────────────── */
+/* TOOLBAR */
 .toolbar {
   height: 48px;
   padding: 0 20px;
@@ -109,11 +109,11 @@ header {
 }
 #size-warn.show { display:block }
 
-/* ── MAIN LAYOUT ─────────────────────────────────────────────────────────── */
+/* MAIN LAYOUT */
 #main-layout { flex:1; display:flex; overflow:hidden; min-height:0 }
 #canvas { flex:1; overflow-y:auto; padding:20px; min-width:0 }
 
-/* ── EMPTY STATE ─────────────────────────────────────────────────────────── */
+/* EMPTY STATE */
 .empty {
   display: flex;
   flex-direction: column;
@@ -192,7 +192,7 @@ header {
   color: var(--mu2);
 }
 
-/* ── FILE GRID ───────────────────────────────────────────────────────────── */
+/* FILE GRID */
 #file-grid {
   display: flex;
   flex-wrap: wrap;
@@ -201,7 +201,7 @@ header {
   animation: fadeIn .15s ease;
 }
 
-/* ── DROP OVERLAY ────────────────────────────────────────────────────────── */
+/* DROP OVERLAY */
 #drop-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -222,7 +222,7 @@ header {
   border: 1px solid var(--ac-ring);
 }
 
-/* ── PREVIEW PANEL ───────────────────────────────────────────────────────── */
+/* PREVIEW PANEL */
 #preview-panel {
   width: 300px;
   border-left: 1px solid var(--b1);
@@ -288,7 +288,7 @@ header {
   width: 100%;
 }
 
-/* ── PREVIEW FOOTER ──────────────────────────────────────────────────────── */
+/* PREVIEW FOOTER */
 .preview-footer {
   border-top: 1px solid var(--b1);
   padding: 12px;

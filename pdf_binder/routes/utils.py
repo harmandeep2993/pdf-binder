@@ -13,7 +13,7 @@ router = APIRouter()
 def zoom_page(key: str, page_idx: int):
     content = cache_get(key)
     if content is None:
-        raise HTTPException(404, "File not in cache — re-upload the file")
+        raise HTTPException(404, "File not in cache - re-upload the file")
     try:
         doc = pdfium.PdfDocument(content)
         if page_idx < 0 or page_idx >= len(doc):

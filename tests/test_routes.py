@@ -8,7 +8,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from pdf_binder import app
 
-# Minimal valid 1-page PDF (no content streams — just structure)
+# Minimal valid 1-page PDF (no content streams - just structure)
 _VALID_PDF = (
     b"%PDF-1.4\n"
     b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
@@ -28,7 +28,7 @@ def transport():
     return ASGITransport(app=app)
 
 
-# ── /pages ────────────────────────────────────────────────────────────────────
+# /pages
 
 @pytest.mark.asyncio
 async def test_pages_rejects_non_pdf(transport):
@@ -59,7 +59,7 @@ async def test_pages_streams_sse(transport):
                             files={"file": ("t.pdf", _VALID_PDF, "application/pdf")}) as r:
             assert r.status_code == 200
             assert "text/event-stream" in r.headers["content-type"]
-            # Read first chunk — should contain meta event
+            # Read first chunk - should contain meta event
             got_meta = False
             async for line in r.aiter_lines():
                 if line.startswith("data:"):
@@ -73,7 +73,7 @@ async def test_pages_streams_sse(transport):
             assert got_meta
 
 
-# ── /merge ────────────────────────────────────────────────────────────────────
+# /merge
 
 @pytest.mark.asyncio
 async def test_merge_rejects_non_pdf(transport):
@@ -105,14 +105,14 @@ async def test_merge_filename_sanitized(transport):
                              "compress": "false",
                          },
                          files=[("files", ("t.pdf", _VALID_PDF, "application/pdf"))])
-    # Either succeeds with sanitized name or fails — must NOT 500
+    # Either succeeds with sanitized name or fails - must NOT 500
     assert r.status_code in (200, 400, 422)
     if r.status_code == 200:
         cd = r.headers.get("content-disposition", "")
         assert "evil.pdf" not in cd or ".." not in cd
 
 
-# ── /split ────────────────────────────────────────────────────────────────────
+# /split
 
 @pytest.mark.asyncio
 async def test_split_rejects_non_pdf(transport):

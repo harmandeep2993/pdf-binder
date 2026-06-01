@@ -8,7 +8,7 @@ S.on('ui:toast',     ({ msg }) => _showToast(msg));
 let _showToast = () => {};
 export function setShowToast(fn) { _showToast = fn; }
 
-// ── LAZY IMAGE OBSERVER ───────────────────────────────────────────────────────
+// LAZY IMAGE OBSERVER
 let _lazyObserver = null;
 function getLazyObserver() {
   if (!_lazyObserver) {
@@ -25,13 +25,13 @@ function getLazyObserver() {
   return _lazyObserver;
 }
 
-// ── UNDO ──────────────────────────────────────────────────────────────────────
+// UNDO
 export function snapshot() {
   S.undoStack.push(S.files.map(f => ({ ...f, pages: f.pages.map(p => ({ ...p })) })));
   if (S.undoStack.length > 30) S.undoStack.shift();
 }
 
-// ── DRAG HELPERS ──────────────────────────────────────────────────────────────
+// DRAG HELPERS
 function clearDrag() {
   document.querySelectorAll('.fcard').forEach(c => c.classList.remove('drop-before', 'drop-after'));
 }
@@ -39,7 +39,7 @@ function clearModalDrag() {
   document.querySelectorAll('.modal-page-card').forEach(c => c.classList.remove('drop-before', 'drop-after'));
 }
 
-// ── GRID (FILE CARDS) ─────────────────────────────────────────────────────────
+// GRID (FILE CARDS)
 export function renderGrid() {
   const grid = document.getElementById('file-grid');
   const empty = document.getElementById('empty');
@@ -128,7 +128,7 @@ export function renderGrid() {
   });
 }
 
-// ── MODAL PAGES ───────────────────────────────────────────────────────────────
+// MODAL PAGES
 export function renderModalPages() {
   const container = document.getElementById('modal-page-grid');
   if (!container) return;
@@ -238,7 +238,7 @@ function _updateModalFooter() {
   document.getElementById('modal-newcard-btn').disabled = !n;
 }
 
-// ── PREVIEW ───────────────────────────────────────────────────────────────────
+// PREVIEW
 export function renderPreview() {
   const pagesEl = document.getElementById('preview-pages');
   const empty = document.getElementById('preview-empty');

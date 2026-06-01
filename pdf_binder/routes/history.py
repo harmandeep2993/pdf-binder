@@ -19,7 +19,7 @@ def view_merge(id: int):
         raise HTTPException(404, "Record not found")
     path = Path(record["file_path"])
     if not path.exists():
-        raise HTTPException(404, "File no longer on disk — it may have been deleted")
+        raise HTTPException(404, "File no longer on disk - it may have been deleted")
     return FileResponse(
         path, media_type="application/pdf",
         headers={"Content-Disposition": f"inline; filename=\"{record['filename']}\""},
@@ -33,7 +33,7 @@ def download_merge(id: int):
         raise HTTPException(404, "Record not found")
     path = Path(record["file_path"])
     if not path.exists():
-        raise HTTPException(404, "File no longer on disk — it may have been deleted")
+        raise HTTPException(404, "File no longer on disk - it may have been deleted")
     return FileResponse(path, filename=record["filename"], media_type="application/pdf")
 
 

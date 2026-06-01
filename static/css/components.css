@@ -1,4 +1,4 @@
-/* ── FILE CARDS ──────────────────────────────────────────────────────────���─ */
+/* FILE CARDS */
 .fcard {
   width: 148px;
   border-radius: var(--rr);
@@ -147,7 +147,7 @@
 .is-dragging .fcard-end-zone { display:block }
 .fcard-end-zone.active { border-color:var(--ac); background:var(--acd) }
 
-/* ── UNDO TOAST ──────────────────────────────────────────────────────────── */
+/* UNDO TOAST */
 #undo-toast {
   position: fixed; bottom:20px; left:50%; transform:translateX(-50%);
   background: var(--s3);
@@ -179,7 +179,7 @@
   font-weight: 600;
 }
 
-/* ── PASSWORD MODAL ──────────────────────────────────────────────────────── */
+/* PASSWORD MODAL */
 .overlay {
   display: none;
   position: fixed; inset:0;
@@ -249,7 +249,7 @@
 .dbtn-ok { background:var(--ac); color:var(--ac-fg) }
 .dbtn-ok:hover { filter:brightness(1.08) }
 
-/* ── INSPECT MODAL ───────────────────────────────────────────────────────── */
+/* INSPECT MODAL */
 #modal-bg {
   display: none;
   position: fixed; inset:0;
@@ -451,7 +451,7 @@
 .modal-status.err     { display:inline-block; background:var(--redd);   color:var(--red)   }
 .modal-status.loading { display:inline-block; background:var(--s2);     color:var(--mu2)   }
 
-/* ── TABS ────────────────────────────────────────────────────────────────── */
+/* TABS */
 .tab-group {
   display: flex;
   gap: 2px;
@@ -474,7 +474,7 @@
 .tab-btn:hover { color: var(--tx) }
 .tab-btn.active { background: var(--s3); color: var(--tx); box-shadow: var(--shadow-sm) }
 
-/* ── HISTORY LIST ─────────────────────────────────────────────────────────── */
+/* HISTORY LIST */
 .hist-empty {
   display: flex;
   flex-direction: column;
@@ -571,7 +571,7 @@
 .hist-btn-del:hover { background: var(--red); color: #fff; border-color: var(--red) }
 .hist-btn-del:disabled { opacity: .35; cursor: not-allowed }
 
-/* ── FILE SECTIONS ───────────────────────────────────────────────────────── */
+/* FILE SECTIONS */
 .file-section { margin-bottom: 28px }
 .file-section.dragging-section { opacity: .4 }
 .file-section.drop-before-section { box-shadow: 0 -3px 0 var(--ac) }
@@ -629,7 +629,7 @@
 .section-prog-fill { height: 100%; background: var(--ac); transition: width .25s }
 .section-error { padding: 14px 0; color: var(--red); font-size: .75rem }
 
-/* ── PAGE CARDS ──────────────────────────────────────────────────────────── */
+/* PAGE CARDS */
 .page-card {
   width: 120px;
   border-radius: 8px;
@@ -704,7 +704,7 @@
   border-top: 1px solid var(--b1);
 }
 
-/* ── PAGE SELECTION BAR ──────────────────────────────────────────────────── */
+/* PAGE SELECTION BAR */
 .page-sel-bar {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   background: var(--acd); border: 1px solid var(--ac-ring);
@@ -713,7 +713,7 @@
 }
 .psel-count { font-weight: 600; color: var(--ac); font-family: 'DM Mono', monospace; flex-shrink: 0 }
 
-/* ── MODAL PAGE CARDS ────────────────────────────────────────────────────── */
+/* MODAL PAGE CARDS */
 .modal-page-card {
   width: 100px;
   border-radius: 6px;
@@ -788,7 +788,7 @@
   border-top: 1px solid var(--b1);
 }
 
-/* ── PAGE GRID MODAL ─────────────────────────────────────────────────────── */
+/* PAGE GRID MODAL */
 .page-grid-modal {
   display: flex;
   flex-wrap: wrap;
@@ -797,7 +797,7 @@
   align-items: flex-start;
 }
 
-/* ── ZOOM OVERLAY ────────────────────────────────────────────────────────── */
+/* ZOOM OVERLAY */
 #zoom-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -833,7 +833,7 @@
 }
 .zoom-close:hover { background: rgba(255,255,255,.22) }
 
-/* ── CROP DIALOG ─────────────────────────────────────────────────────────── */
+/* CROP DIALOG */
 .crop-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -852,13 +852,13 @@
   background: var(--s2);
 }
 
-/* ── SORT BUTTONS ────────────────────────────────────────────────────────── */
+/* SORT BUTTONS */
 .sort-btn { padding: 6px 10px; font-size: .72rem; font-family: 'DM Mono', monospace }
 
-/* ── FOCUSED PAGE IN MODAL ───────────────────────────────────────────────── */
+/* FOCUSED PAGE IN MODAL */
 .mpage.focused-pg { outline: 2px solid var(--blue); outline-offset: 1px }
 
-/* ── ZOOM BUTTON ON MPAGE ────────────────────────────────────────────────── */
+/* ZOOM BUTTON ON MPAGE */
 .mpage-zoom {
   position: absolute; top: 4px; left: 4px;
   width: 18px; height: 18px;
@@ -875,7 +875,7 @@
 .mpage:hover .mpage-zoom { display: flex }
 .mpage-zoom:hover { background: rgba(0,0,0,.85); color: #fff }
 
-/* ── DECRYPT BUTTON IN CARD ──────────────────────────────────────────────── */
+/* DECRYPT BUTTON IN CARD */
 .hover-dec {
   background: rgba(96,165,250,.15);
   color: var(--blue);
@@ -883,7 +883,7 @@
 }
 .hover-dec:hover { background: var(--blue); color: #fff }
 
-/* ── INSPECTOR ADDITIONS ─────────────────────────────────────────────────── */
+/* INSPECTOR ADDITIONS */
 .mrange-row {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 18px;
@@ -924,7 +924,7 @@
 }
 .split-n-input:focus { border-color: var(--ac) }
 
-/* ── SETTINGS MODAL ──────────────────────────────────────────────────────── */
+/* SETTINGS MODAL */
 .sgroup {
   display: flex; flex-direction: column; gap: 8px;
   padding: 10px 0;
@@ -946,7 +946,7 @@
 .srow input[type=range] { accent-color: var(--ac) }
 .preset-row { display: flex; gap: 6px; align-items: center }
 
-/* ── BLANK PAGE CARD ─────────────────────────────────────────────────────── */
+/* BLANK PAGE CARD */
 .blank-thumb {
   width: 100%; height: 100%;
   background: repeating-linear-gradient(
@@ -957,7 +957,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 
-/* ── PREVIEW FOOTER ADDITIONS ────────────────────────────────────────────── */
+/* PREVIEW FOOTER ADDITIONS */
 .footer-label-row { display:flex; align-items:center; justify-content:space-between }
 .meta-btn {
   font-size: .65rem;
@@ -973,7 +973,7 @@
 .meta-btn.has-meta { border-color:var(--ac-ring); color:var(--ac); background:var(--acd) }
 .options-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
 
-/* ── MERGE BUTTON SPINNER ─────────────────────────────────────────────────── */
+/* MERGE BUTTON SPINNER */
 .btn-spinner {
   display: inline-block;
   width: 12px; height: 12px;
@@ -986,7 +986,7 @@
   margin-right: 4px;
 }
 
-/* ── HELP TABLE ──────────────────────────────────────────────────────────── */
+/* HELP TABLE */
 .help-table { width:100%; border-collapse:collapse; font-size:.78rem }
 .help-table td { padding:5px 6px; color:var(--tx); vertical-align:middle }
 .help-table td:first-child { width:46%; text-align:right; padding-right:14px; white-space:nowrap }
@@ -1012,7 +1012,7 @@
   margin: 1px 1px;
 }
 
-/* ── Auth unlock overlay ─────────────────────────────────────────────────────── */
+/* Auth unlock overlay */
 .auth-overlay {
   position: fixed;
   inset: 0;

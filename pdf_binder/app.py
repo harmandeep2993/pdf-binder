@@ -13,7 +13,7 @@ ROOT     = Path(__file__).parent.parent
 FRONTEND = ROOT / "index.html"
 STATIC   = ROOT / "static"
 
-# ── CORS: restrict to localhost only ─────────────────────────────────────────
+# CORS: restrict to localhost only
 _ORIGINS = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:8000 http://127.0.0.1:8000 "
@@ -21,7 +21,7 @@ _ORIGINS = os.getenv(
     "http://localhost:8002 http://127.0.0.1:8002"
 ).split()
 
-# ── Request body size limit (early rejection before reading body) ─────────────
+# Request body size limit (early rejection before reading body)
 _MAX_REQUEST_BYTES = 600 * 1024 * 1024  # 600 MB (multiple files in one merge)
 
 class _SizeLimitMiddleware(BaseHTTPMiddleware):
@@ -31,17 +31,17 @@ class _SizeLimitMiddleware(BaseHTTPMiddleware):
             if cl and int(cl) > _MAX_REQUEST_BYTES:
                 return Response("Request entity too large", status_code=413)
         except ValueError:
-            pass  # malformed header — let the body parser handle it
+            pass  # malformed header - let the body parser handle it
         return await call_next(request)
 
-# ── Optional shared-token auth (defense-in-depth for non-loopback binds) ───────
+# Optional shared-token auth (defense-in-depth for non-loopback binds)
 # Off by default. When PDF_BINDER_TOKEN is set, every request must present it via
 # the `X-Auth-Token` header or a `token` query param.
 _AUTH_TOKEN = os.getenv("PDF_BINDER_TOKEN", "").strip()
 
 # The frontend shell must load unauthenticated so it can render the unlock
 # overlay; only the API endpoints below the shell are gated. (/auth-check is
-# NOT exempt — the frontend relies on its 401 to know a token is needed.)
+# NOT exempt - the frontend relies on its 401 to know a token is needed.)
 def _is_public_path(path: str) -> bool:
     return path == "/" or path.startswith("/static/") or path == "/favicon.ico"
 
@@ -56,7 +56,7 @@ class _AuthMiddleware(BaseHTTPMiddleware):
                                 headers={"X-Auth-Token-Required": "1"})
         return await call_next(request)
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# App
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
