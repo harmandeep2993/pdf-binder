@@ -1,4 +1,4 @@
-import os
+import os, secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request
@@ -34,6 +34,19 @@ class _SizeLimitMiddleware(BaseHTTPMiddleware):
             pass  # malformed header — let the body parser handle it
         return await call_next(request)
 
+# ── Optional shared-token auth (defense-in-depth for non-loopback binds) ───────
+# Off by default. When PDF_BINDER_TOKEN is set, every request must present it via
+# the `X-Auth-Token` header or a `token` query param.
+_AUTH_TOKEN = os.getenv("PDF_BINDER_TOKEN", "").strip()
+
+class _AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if _AUTH_TOKEN:
+            supplied = request.headers.get("x-auth-token") or request.query_params.get("token", "")
+            if not secrets.compare_digest(supplied, _AUTH_TOKEN):
+                return Response("Unauthorized", status_code=401)
+        return await call_next(request)
+
 # ── App ───────────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +55,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="PDF Binder", lifespan=lifespan)
 app.add_middleware(_SizeLimitMiddleware)
+app.add_middleware(_AuthMiddleware)
+# CORS is added last so it stays outermost and can answer preflight OPTIONS
+# (which carry no auth token) before the auth check runs.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ORIGINS,

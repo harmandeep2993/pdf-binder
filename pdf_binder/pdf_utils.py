@@ -1,15 +1,40 @@
 import io, base64
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 
 _MAX_UPLOAD = 100 * 1024 * 1024  # 100 MB per file
+_MAX_PAGES  = 5_000              # max pages we'll render/thumbnail per document
+
+async def read_capped(upload: UploadFile, limit: int = _MAX_UPLOAD) -> bytes:
+    """Read an upload in chunks, aborting once it exceeds `limit`.
+
+    Unlike `await upload.read()`, this never buffers more than `limit` bytes,
+    so it holds regardless of the Content-Length header (which a chunked
+    request can omit to bypass the size-limit middleware).
+    """
+    name   = upload.filename or "file"
+    chunks = []
+    size   = 0
+    while True:
+        chunk = await upload.read(1024 * 1024)
+        if not chunk:
+            break
+        size += len(chunk)
+        if size > limit:
+            raise HTTPException(413, f"{name} exceeds the {limit // (1024 * 1024)} MB upload limit")
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 def assert_pdf(content: bytes, name: str = "file") -> None:
     if len(content) > _MAX_UPLOAD:
         raise HTTPException(413, f"{name} exceeds the 100 MB upload limit")
     if not content.startswith(b"%PDF-"):
         raise HTTPException(400, f"{name} is not a valid PDF")
+
+def assert_page_count(total: int, name: str = "file") -> None:
+    if total > _MAX_PAGES:
+        raise HTTPException(413, f"{name} has too many pages ({total}); max {_MAX_PAGES}")
 
 def open_reader(content: bytes, password: str = "") -> PdfReader:
     reader = PdfReader(io.BytesIO(content))

@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, StreamingResponse
 import pypdfium2 as pdfium
-from ..pdf_utils import assert_pdf, open_reader
+from ..pdf_utils import assert_pdf, open_reader, read_capped
 from ..cache import cache_get
 from pypdf import PdfWriter
 
@@ -41,7 +41,7 @@ async def decrypt_pdf(
 ):
     try:
         cached = cache_get(key)
-        content = cached if cached is not None else await file.read()
+        content = cached if cached is not None else await read_capped(file)
         if cached is None:
             assert_pdf(content, file.filename)
         reader = open_reader(content, password)

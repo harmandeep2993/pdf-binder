@@ -7,6 +7,9 @@ _DB_PATH    = _ROOT / "history.db"
 _OUTPUT_DIR = _ROOT / "output"
 _lock       = threading.Lock()
 
+# Cap stored merges so generated PDFs don't accumulate on disk indefinitely.
+_MAX_HISTORY = 50
+
 
 def _conn() -> sqlite3.Connection:
     c = sqlite3.connect(str(_DB_PATH))
@@ -37,7 +40,23 @@ def insert_merge(filename: str, file_path: str, sources: list, pages: int, size:
             (filename, str(file_path), json.dumps(sources), pages, size,
              datetime.now().isoformat(timespec="seconds"))
         )
-        return cur.lastrowid
+        new_id = cur.lastrowid
+        _prune(c)
+        return new_id
+
+
+def _prune(c: sqlite3.Connection) -> None:
+    """Delete rows (and their files) beyond the _MAX_HISTORY most recent."""
+    stale = c.execute(
+        "SELECT id, file_path FROM merges ORDER BY id DESC LIMIT -1 OFFSET ?",
+        (_MAX_HISTORY,),
+    ).fetchall()
+    for row in stale:
+        try:
+            Path(row["file_path"]).unlink(missing_ok=True)
+        except OSError:
+            pass
+        c.execute("DELETE FROM merges WHERE id = ?", (row["id"],))
 
 
 def list_merges() -> list:

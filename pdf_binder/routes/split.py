@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Background
 from fastapi.responses import FileResponse
 from pypdf import PdfWriter
 import pypdfium2 as pdfium
-from ..pdf_utils import assert_pdf, open_reader
+from ..pdf_utils import assert_pdf, open_reader, read_capped
 from ..cache import cache_get
 
 router = APIRouter()
@@ -30,7 +30,7 @@ async def split_pdf(
             raise HTTPException(400, "rotations must be a JSON object")
         to_images = as_images.lower() == "true"
         cached    = cache_get(key)
-        content   = cached if cached is not None else await file.read()
+        content   = cached if cached is not None else await read_capped(file)
         if cached is None:
             assert_pdf(content, file.filename)
 

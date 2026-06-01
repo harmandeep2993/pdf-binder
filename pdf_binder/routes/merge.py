@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from pypdf import PdfReader, PdfWriter, PageObject, Transformation
 import pypdfium2 as pdfium
 from PIL import Image
-from ..pdf_utils import assert_pdf, open_reader
+from ..pdf_utils import assert_pdf, open_reader, read_capped
 from ..cache import cache_get
 from ..history import insert_merge, _OUTPUT_DIR
 
@@ -228,7 +228,7 @@ async def merge_pdfs(
             if cached is not None:
                 buffers[f.filename] = cached
             else:
-                content = await f.read()
+                content = await read_capped(f)
                 assert_pdf(content, f.filename)
                 buffers[f.filename] = content
 
@@ -327,7 +327,7 @@ async def merge_pdfs(
                 writer.add_metadata(pdf_meta)
 
         if do_encrypt:
-            writer.encrypt(user_password=output_password.strip())
+            writer.encrypt(user_password=output_password.strip(), algorithm="AES-256")
 
         filename = Path(filename).name or "merged.pdf"
         if not filename.lower().endswith(".pdf"):

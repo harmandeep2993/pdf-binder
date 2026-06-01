@@ -2,7 +2,7 @@ import io, json, asyncio, traceback
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
 from pypdf import PdfReader
-from ..pdf_utils import assert_pdf, open_reader, stream_thumbs
+from ..pdf_utils import assert_pdf, assert_page_count, open_reader, stream_thumbs, read_capped
 from ..cache import cache_put
 
 router = APIRouter()
@@ -10,7 +10,7 @@ router = APIRouter()
 @router.post("/pages")
 async def get_pages(file: UploadFile = File(...), password: str = Form("")):
     try:
-        content = await file.read()
+        content = await read_capped(file)
         assert_pdf(content, file.filename)
 
         # Auth must succeed before streaming starts
@@ -26,6 +26,7 @@ async def get_pages(file: UploadFile = File(...), password: str = Form("")):
 
         reader = open_reader(content, password)
         total  = len(reader.pages)
+        assert_page_count(total, file.filename)
         key    = cache_put(content)
         fname  = file.filename
         size   = len(content)
