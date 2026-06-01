@@ -45,5 +45,5 @@ exe = EXE(
     upx=False,
     runtime_tmpdir=None,
     console=True,          # show the "running at ..." window; closing it quits
-    icon="static/favicon.ico" if False else None,
+    icon="static/favicon.ico",
 )
