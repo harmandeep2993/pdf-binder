@@ -8,11 +8,13 @@ runs locally on their machine.
 
 You need Python 3.12+ and [uv](https://github.com/astral-sh/uv).
 
-```powershell
-powershell -ExecutionPolicy Bypass -File build.ps1
-```
+**Easiest:** double-click **`build.bat`** in File Explorer.
 
-or directly:
+(Double-clicking `build.ps1` just opens it in Notepad - Windows won't run a
+`.ps1` on double-click. Use `build.bat`, or right-click `build.ps1` ->
+"Run with PowerShell".)
+
+Or from a terminal:
 
 ```powershell
 uv run --with pyinstaller pyinstaller pdfbinder.spec --noconfirm --clean
