@@ -76,15 +76,29 @@ export function renderGrid() {
         ` : ''}
         ${!file.loading && !file.error && !file.thumbs[0] ? `<div class="pc-placeholder"></div>` : ''}
         ${file.error ? `<div style="color:var(--red);font-size:.7rem;text-align:center;width:100%">Error</div>` : ''}
+        ${badgeCls ? `<div class="pg-badge ${badgeCls}">${inc}/${file.total}</div>` : ''}
       </div>
       <div class="fcard-order">${idx + 1}</div>
-      ${badgeCls ? `<div class="pg-badge ${badgeCls}">${inc}/${file.total}</div>` : ''}
       <div class="fcard-hover">
         <button class="hover-open" onclick="openModal('${file.id}')">Inspect</button>
         <button class="hover-btn" onclick="duplicateCard('${file.id}')" title="Duplicate">⧉</button>
         ${S.filePasswords[file.id] ? `<button class="hover-btn" onclick="decryptCard('${file.id}')" style="color:var(--blue)" title="Download decrypted">🔓</button>` : ''}
         <button class="hover-btn danger" onclick="removeFileAction('${file.id}')" title="Remove">✕</button>
+      </div>
+      <div class="fcard-footer">
+        <div class="fcard-name"></div>
+        <div class="fcard-meta"></div>
       </div>`;
+
+    // Set filename/size via textContent (never innerHTML) so a crafted filename
+    // can't inject HTML. CSS ellipsis truncates the name; title shows it in full.
+    const nameEl = card.querySelector('.fcard-name');
+    nameEl.textContent = file.filename;
+    nameEl.title = file.filename;
+    const metaParts = [];
+    if (file.total) metaParts.push(`${file.total} pg`);
+    if (file.size)  metaParts.push(fmtSize(file.size));
+    card.querySelector('.fcard-meta').textContent = metaParts.join(' · ');
 
     const img = card.querySelector('img');
     if (img && !img.src) obs.observe(img);
