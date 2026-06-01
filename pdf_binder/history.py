@@ -1,8 +1,8 @@
 import sqlite3, json, threading
-from pathlib import Path
 from datetime import datetime
+from .paths import data_dir
 
-_ROOT       = Path(__file__).parent.parent
+_ROOT       = data_dir()
 _DB_PATH    = _ROOT / "history.db"
 _OUTPUT_DIR = _ROOT / "output"
 _lock       = threading.Lock()

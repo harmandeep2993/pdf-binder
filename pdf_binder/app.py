@@ -1,6 +1,5 @@
 import os, secrets
 from contextlib import asynccontextmanager
-from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response
@@ -8,8 +7,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from .routes import router
 from .history import init_db
+from .paths import resource_dir
 
-ROOT     = Path(__file__).parent.parent
+ROOT     = resource_dir()
 FRONTEND = ROOT / "index.html"
 STATIC   = ROOT / "static"
 
