@@ -55,9 +55,9 @@
     <input type="file" id="file-input" multiple accept=".pdf">
     <button class="btn btn-ghost" onclick="addBlankPage()">+ Blank</button>
     <div class="t-sep"></div>
-    <button class="btn btn-ghost sort-btn" onclick="sortCards('name')" title="Sort by name">A-Z</button>
-    <button class="btn btn-ghost sort-btn" onclick="sortCards('pages')" title="Sort by pages">Pg</button>
-    <button class="btn btn-ghost sort-btn" onclick="sortCards('size')" title="Sort by size">Sz</button>
+    <button class="btn btn-ghost sort-btn" data-sort="name" onclick="sortCards('name')" title="Sort by name">A-Z</button>
+    <button class="btn btn-ghost sort-btn" data-sort="pages" onclick="sortCards('pages')" title="Sort by pages">Pg</button>
+    <button class="btn btn-ghost sort-btn" data-sort="size" onclick="sortCards('size')" title="Sort by size">Sz</button>
     <div class="t-sep"></div>
     <button class="btn btn-ghost" onclick="clearAll()">Clear all</button>
   </div>

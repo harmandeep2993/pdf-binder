@@ -73,15 +73,32 @@ function clearAll() {
 }
 
 // SORT CARDS
+let _sortKey = null, _sortAsc = true;
+const _SORT_LABELS = { name: 'A-Z', pages: 'Pg', size: 'Sz' };
 function sortCards(by) {
   if (!S.files.length) return; snapshot();
+  // Same column again flips direction; a new column starts ascending.
+  _sortAsc = by === _sortKey ? !_sortAsc : true;
+  _sortKey = by;
+  const dir = _sortAsc ? 1 : -1;
   S.files.sort((a, b) => {
-    if (by === 'name')  return a.filename.localeCompare(b.filename);
-    if (by === 'pages') return (a.total || 0) - (b.total || 0);
-    if (by === 'size')  return (a.size  || 0) - (b.size  || 0);
-    return 0;
+    let r = 0;
+    if (by === 'name')  r = a.filename.localeCompare(b.filename);
+    else if (by === 'pages') r = (a.total || 0) - (b.total || 0);
+    else if (by === 'size')  r = (a.size  || 0) - (b.size  || 0);
+    return r * dir;
   });
+  _updateSortButtons();
   S.filesChanged();
+}
+function _updateSortButtons() {
+  document.querySelectorAll('.sort-btn').forEach(b => {
+    const key  = b.dataset.sort;
+    const base = _SORT_LABELS[key] || key;
+    const active = key === _sortKey;
+    b.classList.toggle('active', active);
+    b.textContent = active ? `${base} ${_sortAsc ? '↑' : '↓'}` : base;
+  });
 }
 
 // DUPLICATE CARD

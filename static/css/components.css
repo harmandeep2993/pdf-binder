@@ -854,6 +854,7 @@
 
 /* SORT BUTTONS */
 .sort-btn { padding: 6px 10px; font-size: .72rem; font-family: 'DM Mono', monospace }
+.sort-btn.active { color: var(--ac); border-color: var(--ac-ring); background: var(--acd) }
 
 /* FOCUSED PAGE IN MODAL */
 .mpage.focused-pg { outline: 2px solid var(--blue); outline-offset: 1px }
