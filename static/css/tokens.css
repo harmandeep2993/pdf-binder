@@ -20,6 +20,7 @@
   /* accent */
   --ac:      #d4f73c;
   --ac-fg:   #0a0a0a;
+  --ac-text: #d4f73c;   /* accent used as foreground text/icons (readable per theme) */
   --acd:     rgba(212,247,60,.07);
   --ac-ring: rgba(212,247,60,.25);
 
@@ -56,6 +57,7 @@
   --tx:  #0f0f0f;
   --mu:  #b0b0b0;
   --mu2: #707070;
+  --ac-text: #4d7c0f;   /* darker green so accent text is readable on light bg */
   --acd: rgba(100,160,0,.07);
   --ac-ring: rgba(100,160,0,.3);
   --redd:    rgba(220,50,50,.1);

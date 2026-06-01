@@ -129,7 +129,7 @@
   border-radius:var(--r); padding:6px 12px;
   margin-bottom:14px; font-size:.78rem; color:var(--tx);
 }
-.sel-bar-count { font-weight:600; color:var(--ac); font-family:'DM Mono',monospace }
+.sel-bar-count { font-weight:600; color:var(--ac-text); font-family:'DM Mono',monospace }
 .sel-bar-btn { font-size:.73rem; padding:4px 10px }
 
 /* end zone */
@@ -360,7 +360,7 @@
 .rot-badge {
   position: absolute; top:5px; left:5px;
   background: rgba(0,0,0,.75);
-  color: var(--ac);
+  color: var(--ac-text);
   font-size: .55rem;
   font-family: 'DM Mono', monospace;
   padding: 1px 5px;
@@ -689,7 +689,7 @@
 
 .pc-rot {
   position: absolute; bottom: 4px; left: 4px;
-  background: rgba(0,0,0,.75); color: var(--ac);
+  background: rgba(0,0,0,.75); color: var(--ac-text);
   font-size: .5rem; font-family: 'DM Mono', monospace;
   padding: 1px 4px; border-radius: 4px; pointer-events: none;
 }
@@ -711,7 +711,7 @@
   border-radius: var(--r); padding: 6px 12px;
   margin-bottom: 16px; font-size: .75rem; color: var(--tx);
 }
-.psel-count { font-weight: 600; color: var(--ac); font-family: 'DM Mono', monospace; flex-shrink: 0 }
+.psel-count { font-weight: 600; color: var(--ac-text); font-family: 'DM Mono', monospace; flex-shrink: 0 }
 
 /* MODAL PAGE CARDS */
 .modal-page-card {
@@ -761,7 +761,7 @@
   bottom: 3px;
   left: 3px;
   background: rgba(0,0,0,.75);
-  color: var(--ac);
+  color: var(--ac-text);
   font-size: .45rem;
   font-family: 'DM Mono', monospace;
   padding: 1px 3px;
@@ -854,7 +854,7 @@
 
 /* SORT BUTTONS */
 .sort-btn { padding: 6px 10px; font-size: .72rem; font-family: 'DM Mono', monospace }
-.sort-btn.active { color: var(--ac); border-color: var(--ac-ring); background: var(--acd) }
+.sort-btn.active { color: var(--ac-text); border-color: var(--ac-ring); background: var(--acd) }
 
 /* FOCUSED PAGE IN MODAL */
 .mpage.focused-pg { outline: 2px solid var(--blue); outline-offset: 1px }
@@ -971,7 +971,7 @@
   font-weight: 500;
 }
 .meta-btn:hover { color:var(--tx); border-color:var(--b3); background:var(--s3) }
-.meta-btn.has-meta { border-color:var(--ac-ring); color:var(--ac); background:var(--acd) }
+.meta-btn.has-meta { border-color:var(--ac-ring); color:var(--ac-text); background:var(--acd) }
 .options-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
 
 /* MERGE BUTTON SPINNER */
@@ -1050,7 +1050,7 @@
   justify-content: center;
   border-radius: var(--pill);
   background: var(--acd);
-  color: var(--ac);
+  color: var(--ac-text);
 }
 .auth-title {
   margin: 0 0 6px;
